@@ -1,0 +1,1678 @@
+{
+  "files_scanned": [
+    "team_INAC_千葉_CRAVO_FC.html",
+    "team_INAC_白岡SCレテ_ィース.html",
+    "team_RB大宮アルテ_ィーシ_ャ_WOMEN_U15.html",
+    "team_VONDS市原FCレテ_ィースU_15.html",
+    "team_bellmare.html",
+    "team_chifure.html",
+    "team_gunma.html",
+    "team_inac_chiba.html",
+    "team_inac_shiraoka.html",
+    "team_jef.html",
+    "team_jumonji.html",
+    "team_meg.html",
+    "team_nojima.html",
+    "team_omitama.html",
+    "team_rb_omiya.html",
+    "team_reds.html",
+    "team_sfida.html",
+    "team_tochigi.html",
+    "team_vonds.html",
+    "team_ちふれASエルフェン埼玉マリU_15.html",
+    "team_サ_スハ_群馬レテ_ィースU_15.html",
+    "team_シ_ェフユナイテット_市原_千葉レテ_ィースU_15.html",
+    "team_スフィータ_世田谷FCユース.html",
+    "team_ノシ_マステラ神奈川相模原アウ_ェニーレ.html",
+    "team_三菱重工浦和レッス_レテ_ィースシ_ュニアユース.html",
+    "team_十文字中学校.html",
+    "team_小美玉フットホ_ールアカテ_ミー.html",
+    "team_栃木SCレテ_ィース.html",
+    "team_横須賀シーカ_ルス_MEG.html",
+    "team_湘南ヘ_ルマーレU_15カ_ールス_.html"
+  ],
+  "per_file_counts": {
+    "team_INAC_千葉_CRAVO_FC.html": 17,
+    "team_INAC_白岡SCレテ_ィース.html": 9,
+    "team_RB大宮アルテ_ィーシ_ャ_WOMEN_U15.html": 17,
+    "team_VONDS市原FCレテ_ィースU_15.html": 7,
+    "team_bellmare.html": 15,
+    "team_chifure.html": 6,
+    "team_gunma.html": 11,
+    "team_inac_chiba.html": 18,
+    "team_inac_shiraoka.html": 9,
+    "team_jef.html": 12,
+    "team_jumonji.html": 16,
+    "team_meg.html": 11,
+    "team_nojima.html": 12,
+    "team_omitama.html": 5,
+    "team_rb_omiya.html": 17,
+    "team_reds.html": 10,
+    "team_sfida.html": 18,
+    "team_tochigi.html": 14,
+    "team_vonds.html": 8,
+    "team_ちふれASエルフェン埼玉マリU_15.html": 6,
+    "team_サ_スハ_群馬レテ_ィースU_15.html": 10,
+    "team_シ_ェフユナイテット_市原_千葉レテ_ィースU_15.html": 11,
+    "team_スフィータ_世田谷FCユース.html": 16,
+    "team_ノシ_マステラ神奈川相模原アウ_ェニーレ.html": 11,
+    "team_三菱重工浦和レッス_レテ_ィースシ_ュニアユース.html": 10,
+    "team_十文字中学校.html": 16,
+    "team_小美玉フットホ_ールアカテ_ミー.html": 5,
+    "team_栃木SCレテ_ィース.html": 13,
+    "team_横須賀シーカ_ルス_MEG.html": 9,
+    "team_湘南ヘ_ルマーレU_15カ_ールス_.html": 15
+  },
+  "players": [
+    {
+      "name": "松田 千紗",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 17
+    },
+    {
+      "name": "松田千紗",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 16
+    },
+    {
+      "name": "新田 千穂",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 13
+    },
+    {
+      "name": "新田千穂",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 13
+    },
+    {
+      "name": "徳生花音",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 12
+    },
+    {
+      "name": "牧野 菜々",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 11
+    },
+    {
+      "name": "武井 ふうこ",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 10
+    },
+    {
+      "name": "武井ふうこ",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 10
+    },
+    {
+      "name": "牧野菜々",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 10
+    },
+    {
+      "name": "真田 小町",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 10
+    },
+    {
+      "name": "真田小町",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 10
+    },
+    {
+      "name": "田中葉色",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 9
+    },
+    {
+      "name": "茂木 陽菜",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 9
+    },
+    {
+      "name": "茂木陽菜",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 9
+    },
+    {
+      "name": "丹野 柚",
+      "team": "栃木SCレディース",
+      "goals": 8
+    },
+    {
+      "name": "丹野柚",
+      "team": "栃木SCレディース",
+      "goals": 8
+    },
+    {
+      "name": "吉川 葵",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 8
+    },
+    {
+      "name": "吉川葵",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 8
+    },
+    {
+      "name": "山田 笑子",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 8
+    },
+    {
+      "name": "山田笑子",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 8
+    },
+    {
+      "name": "小島 瑚菜",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 7
+    },
+    {
+      "name": "小島瑚菜",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 7
+    },
+    {
+      "name": "曽雌 心美",
+      "team": "十文字中学校",
+      "goals": 7
+    },
+    {
+      "name": "曽雌心美",
+      "team": "十文字中学校",
+      "goals": 7
+    },
+    {
+      "name": "村田 紗菜",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 7
+    },
+    {
+      "name": "村田紗菜",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 7
+    },
+    {
+      "name": "菊地 沙愛",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 7
+    },
+    {
+      "name": "菊地沙愛",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 7
+    },
+    {
+      "name": "関根 舞彩",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 7
+    },
+    {
+      "name": "関根舞彩",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 7
+    },
+    {
+      "name": "阿久津 三希",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 7
+    },
+    {
+      "name": "阿久津三希",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 7
+    },
+    {
+      "name": "中島 萌花",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 6
+    },
+    {
+      "name": "中島萌花",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 6
+    },
+    {
+      "name": "吉井 真夏",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "吉井真夏",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "岩井 翠星",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "岩井翠星",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "横田 理桜",
+      "team": "十文字中学校",
+      "goals": 6
+    },
+    {
+      "name": "横田理桜",
+      "team": "十文字中学校",
+      "goals": 6
+    },
+    {
+      "name": "浅野 心都",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 6
+    },
+    {
+      "name": "浅野心都",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 6
+    },
+    {
+      "name": "矢内 智華",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "矢内智華",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "菊地 菜々美",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "菊地菜々美",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 6
+    },
+    {
+      "name": "中村美優",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 5
+    },
+    {
+      "name": "保坂美海",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 5
+    },
+    {
+      "name": "奥田 利咲",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 5
+    },
+    {
+      "name": "奥田利咲",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 5
+    },
+    {
+      "name": "小倉 那月",
+      "team": "INAC 白岡SCレディース",
+      "goals": 5
+    },
+    {
+      "name": "小倉那月",
+      "team": "INAC白岡SCレディース",
+      "goals": 5
+    },
+    {
+      "name": "新居 蒼生",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 5
+    },
+    {
+      "name": "新居蒼生",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 5
+    },
+    {
+      "name": "檜山 未知琉",
+      "team": "栃木SCレディース",
+      "goals": 5
+    },
+    {
+      "name": "檜山未知琉",
+      "team": "栃木SCレディース",
+      "goals": 5
+    },
+    {
+      "name": "片岡 菜葉",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 5
+    },
+    {
+      "name": "片岡菜葉",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 5
+    },
+    {
+      "name": "茂木 暖",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 5
+    },
+    {
+      "name": "佐藤 楓",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 4
+    },
+    {
+      "name": "佐藤楓",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 4
+    },
+    {
+      "name": "加藤 咲那",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 4
+    },
+    {
+      "name": "加藤咲那",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 4
+    },
+    {
+      "name": "増田 彩衣里",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 4
+    },
+    {
+      "name": "増田彩衣里",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 4
+    },
+    {
+      "name": "林 加笑",
+      "team": "栃木SCレディース",
+      "goals": 4
+    },
+    {
+      "name": "林加笑",
+      "team": "栃木SCレディース",
+      "goals": 4
+    },
+    {
+      "name": "柴田結月",
+      "team": "横須賀シーガルズMEG",
+      "goals": 4
+    },
+    {
+      "name": "武井 桃香",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "武井桃香",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "比留間 きり",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 4
+    },
+    {
+      "name": "比留間きり",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 4
+    },
+    {
+      "name": "浅野伶央",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 4
+    },
+    {
+      "name": "清水 うらら",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "清水うらら",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "渡邉 凛",
+      "team": "栃木SCレディース",
+      "goals": 4
+    },
+    {
+      "name": "渡邉凛",
+      "team": "栃木SCレディース",
+      "goals": 4
+    },
+    {
+      "name": "茂木暖",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 4
+    },
+    {
+      "name": "野口みどり",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 4
+    },
+    {
+      "name": "鬼久保 遥花",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "鬼久保遥花",
+      "team": "十文字中学校",
+      "goals": 4
+    },
+    {
+      "name": "仙石 みのり",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 3
+    },
+    {
+      "name": "仙石みのり",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 3
+    },
+    {
+      "name": "内川 なお",
+      "team": "十文字中学校",
+      "goals": 3
+    },
+    {
+      "name": "内川なお",
+      "team": "十文字中学校",
+      "goals": 3
+    },
+    {
+      "name": "小澤 璃子",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 3
+    },
+    {
+      "name": "小澤璃子",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 3
+    },
+    {
+      "name": "尾崎 あかね",
+      "team": "十文字中学校",
+      "goals": 3
+    },
+    {
+      "name": "尾崎あかね",
+      "team": "十文字中学校",
+      "goals": 3
+    },
+    {
+      "name": "平井 香凛",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 3
+    },
+    {
+      "name": "平井香凛",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 3
+    },
+    {
+      "name": "柴田麗衣",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 3
+    },
+    {
+      "name": "清水若葉",
+      "team": "INAC 白岡SCレディース",
+      "goals": 3
+    },
+    {
+      "name": "清水若葉",
+      "team": "INAC白岡SCレディース",
+      "goals": 3
+    },
+    {
+      "name": "田島 帆夏",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 3
+    },
+    {
+      "name": "田島帆夏",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 3
+    },
+    {
+      "name": "蘭牟田 芽依",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 3
+    },
+    {
+      "name": "蘭牟田芽依",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 3
+    },
+    {
+      "name": "諏訪 楓",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 3
+    },
+    {
+      "name": "諏訪楓",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 3
+    },
+    {
+      "name": "近藤 芽衣",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 3
+    },
+    {
+      "name": "近藤芽衣",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 3
+    },
+    {
+      "name": "長谷莉衣菜",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 3
+    },
+    {
+      "name": "飯塚 紗永",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 3
+    },
+    {
+      "name": "飯塚紗永",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 3
+    },
+    {
+      "name": "吉崎 小梅",
+      "team": "横須賀シーガルズMEG",
+      "goals": 2
+    },
+    {
+      "name": "吉崎小梅",
+      "team": "横須賀シーガルズMEG",
+      "goals": 2
+    },
+    {
+      "name": "土屋 華歩",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 2
+    },
+    {
+      "name": "土屋華歩",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 2
+    },
+    {
+      "name": "坂上 愛姫",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "坂上愛姫",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "奈良 凪紗",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "奈良凪紗",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "奥墨 結花",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 2
+    },
+    {
+      "name": "奥墨結花",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 2
+    },
+    {
+      "name": "富澤 結夢",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "富澤結夢",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "寺門 絢音",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 2
+    },
+    {
+      "name": "寺門絢音",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 2
+    },
+    {
+      "name": "小口 彩理",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 2
+    },
+    {
+      "name": "小口彩理",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 2
+    },
+    {
+      "name": "小川 梨心",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "小川梨心",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "小森 陽咲",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "小森陽咲",
+      "team": "栃木SCレディース",
+      "goals": 2
+    },
+    {
+      "name": "山本渚子",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 2
+    },
+    {
+      "name": "山田 七海",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "山田七海",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "岩崎 かえら",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 2
+    },
+    {
+      "name": "岩崎かえら",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 2
+    },
+    {
+      "name": "平山樹歩",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 2
+    },
+    {
+      "name": "平野 笑帆",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 2
+    },
+    {
+      "name": "平野笑帆",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 2
+    },
+    {
+      "name": "斎藤 希子",
+      "team": "横須賀シーガルズMEG",
+      "goals": 2
+    },
+    {
+      "name": "服部 由華",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 2
+    },
+    {
+      "name": "服部由華",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 2
+    },
+    {
+      "name": "松原 璃々",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "松原璃々",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "林 侑花",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 2
+    },
+    {
+      "name": "林侑花",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 2
+    },
+    {
+      "name": "田村 明希",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 2
+    },
+    {
+      "name": "田村明希",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 2
+    },
+    {
+      "name": "竹澤 瑚夏",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "竹澤瑚夏",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "笹ノ間 奈央",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 2
+    },
+    {
+      "name": "笹ノ間奈央",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 2
+    },
+    {
+      "name": "綿引 夏希",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 2
+    },
+    {
+      "name": "薬袋胡乃花",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 2
+    },
+    {
+      "name": "西脇姫花",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 2
+    },
+    {
+      "name": "遊佐 葉月",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "遊佐葉月",
+      "team": "十文字中学校",
+      "goals": 2
+    },
+    {
+      "name": "鈴木 優心",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 2
+    },
+    {
+      "name": "鈴木優心",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 2
+    },
+    {
+      "name": "高橋 杏莉",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "高橋杏莉",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 2
+    },
+    {
+      "name": "OG",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "OG",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "OG",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "OG",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "OG 40分+",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "オウンゴール",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "オウンゴール",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "上見遥香",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "中嶋鈴",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "中澤 柚寿",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "中澤柚寿",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "中田優沙",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "中邨 日向",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "中邨日向",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "丸林 日和",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "丸林日和",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "丹野 柚",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "丹野柚",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "伊東 空",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "伊東空",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "佐藤桜咲",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "佐野希空",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "佐野希空",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "保坂美海４０",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "倉田 香ヶ彩",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "倉田香ヶ彩",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "加瀬 楓",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "加瀬楓",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "北島利夏",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "原島蒼依",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "吉岡 奏碧",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "吉岡奏碧",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "吉成 礼",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "吉成礼",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "吉江 美水帆",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "吉江美水帆",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "吉浦 希",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "吉浦希",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "土屋 琉夏",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "土屋 琉花",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "土屋琉夏",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "土屋琉花",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "大久保 藍奈",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "大久保藍奈",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "大山 心路",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "大山心路",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "大岩 音波",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "大岩音波",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "大木 優里葉",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "大木優里葉",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "奥村 心奏",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 1
+    },
+    {
+      "name": "奥村心奏",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 1
+    },
+    {
+      "name": "小口 彩里",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "小口彩里",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "小峯虹",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "小島 ひなた",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "小島ひなた",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "山崎 日向葵",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "山崎日向葵",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "山本美雨",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "岡崎かえで",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "岸本 恵凛",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "岸本恵凛",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "峰岸 果海",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "峰岸果海",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "平出 皐",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "平出皐",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "平田 樹歩",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "平田樹歩",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "徳生 花音 23分、",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "掛川 蘭",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "掛川蘭80",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "斎藤希子",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "斎藤希子80",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "杉原芽依",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "杉原芽依",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "杉崎 汐里",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "杉崎汐里",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "村上 菜葉",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "村上菜葉",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "村部彩華",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "村部彩華",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "松尾 咲良",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "松尾咲良",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "松川 明愛",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "松川明愛",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "松本 芽生",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "松本芽生",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "松田千紗40",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "林 加笑",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "林 果奈実",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "林 果奈美",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "林 碧瀬",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "林 郁花",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "林加笑",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "林果奈実",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "林果奈美",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "林碧瀬",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "林郁花",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "栢森 咲夏",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "栢森咲夏",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "森田 梨愛",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "森田 湖朱",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "森田梨愛",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "森田湖朱",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "比嘉 マキ",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "比嘉マキ",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "江藤はな",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "沓掛加奈",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "沓掛加奈80",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "津久井 小花",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "津久井小花",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "渡邉 凛",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "渡邉凛",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "滝澤 優",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "滝澤 優奈",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "滝澤優",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "滝澤優奈",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "牧野菜々80",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "田中 深都",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "田中深都",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "由利 桃子",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "由利桃子",
+      "team": "三菱重工浦和レッズレディースジュニアユース",
+      "goals": 1
+    },
+    {
+      "name": "甲斐 佳音",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "甲斐佳音",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "石牟礼 咲希",
+      "team": "RB大宮アルディージャ WOMEN U15",
+      "goals": 1
+    },
+    {
+      "name": "石牟礼咲希",
+      "team": "RB大宮アルディージャWOMENU15",
+      "goals": 1
+    },
+    {
+      "name": "福永桔子",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "窪田心優",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "窪田心優８０",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "箕輪 ひさの",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "箕輪ひさの",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "箱崎 莉乃",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "箱崎莉乃",
+      "team": "十文字中学校",
+      "goals": 1
+    },
+    {
+      "name": "紫田結月",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "綿引夏希",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "綿引夏希80",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "花村 莉子",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "花村莉子",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "茂木暖40",
+      "team": "ザスパ群馬レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "荒井庵",
+      "team": "ノジマステラ神奈川相模原アヴェニーレ",
+      "goals": 1
+    },
+    {
+      "name": "菊地悠衣",
+      "team": "INAC 白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "菊地悠衣",
+      "team": "INAC白岡SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "薮下 遥",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "薮下遥",
+      "team": "湘南ベルマーレU-15ガールズ",
+      "goals": 1
+    },
+    {
+      "name": "鈴木 和心",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "鈴木 唯寛",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "鈴木 心絆",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "鈴木和心",
+      "team": "ちふれASエルフェン埼玉マリU-15",
+      "goals": 1
+    },
+    {
+      "name": "鈴木唯寛",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "鈴木心絆",
+      "team": "栃木SCレディース",
+      "goals": 1
+    },
+    {
+      "name": "鈴木沙弥",
+      "team": "ジェフユナイテッド市原・千葉レディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "長田陽菜",
+      "team": "VONDS市原FCレディースU-15",
+      "goals": 1
+    },
+    {
+      "name": "長谷川紗良",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "長谷川紗良80",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "関 まはる",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "関まはる",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "阿部妃栞",
+      "team": "横須賀シーガルズMEG",
+      "goals": 1
+    },
+    {
+      "name": "飯岡 真生",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "飯岡真生",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "飯村叶愛",
+      "team": "小美玉フットボールアカデミー",
+      "goals": 1
+    },
+    {
+      "name": "高橋 茉愛",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "高橋茉愛",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    },
+    {
+      "name": "齊藤 礼",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "齊藤礼",
+      "team": "スフィーダ世田谷FCユース",
+      "goals": 1
+    },
+    {
+      "name": "齋藤 楓花",
+      "team": "INAC 千葉 CRAVO FC",
+      "goals": 1
+    },
+    {
+      "name": "齋藤楓花",
+      "team": "INAC千葉CRAVOFC",
+      "goals": 1
+    }
+  ]
+}
