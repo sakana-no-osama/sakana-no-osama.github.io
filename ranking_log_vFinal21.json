@@ -1,0 +1,104 @@
+{
+  "timestamp": "20251022_211958",
+  "sources": [
+    "team_INAC_千葉_CRAVO_FC.html",
+    "team_INAC_白岡SCレテ_ィース.html",
+    "team_RB大宮アルテ_ィーシ_ャ_WOMEN_U15.html",
+    "team_TRAUM_SVレテ_ィースU_15.html",
+    "team_VONDS市原FCレテ_ィースU_15.html",
+    "team_bellmare.html",
+    "team_chifure.html",
+    "team_gunma.html",
+    "team_inac_chiba.html",
+    "team_inac_shiraoka.html",
+    "team_jef.html",
+    "team_jumonji.html",
+    "team_meg.html",
+    "team_nojima.html",
+    "team_omitama.html",
+    "team_rb_omiya.html",
+    "team_reds.html",
+    "team_sfida.html",
+    "team_tochigi.html",
+    "team_traum.html",
+    "team_vonds.html",
+    "team_ちふれASエルフェン埼玉マリU_15.html",
+    "team_サ_スハ_群馬レテ_ィースU_15.html",
+    "team_シ_ェフユナイテット_市原_千葉レテ_ィースU_15.html",
+    "team_スフィータ_世田谷FCユース.html",
+    "team_ノシ_マステラ神奈川相模原アウ_ェニーレ.html",
+    "team_三菱重工浦和レッス_レテ_ィースシ_ュニアユース.html",
+    "team_十文字中学校.html",
+    "team_小美玉フットホ_ールアカテ_ミー.html",
+    "team_栃木SCレテ_ィース.html",
+    "team_横須賀シーカ_ルス_MEG.html",
+    "team_湘南ヘ_ルマーレU_15カ_ールス_.html"
+  ],
+  "teams_detected": [
+    "INAC 千葉 CRAVO FC 得点ランキング",
+    "INAC 白岡SCレディース 得点ランキング",
+    "INAC千葉CRAVOFC チーム別得点ランキング",
+    "INAC白岡SCレディース チーム別得点ランキング",
+    "RB大宮アルディージャ WOMEN U15 得点ランキング",
+    "RB大宮アルディージャWOMENU15 チーム別得点ランキング",
+    "TRAUM SVレディースU-15 得点ランキング",
+    "TRAUMSVレディースU-15 チーム別得点ランキング",
+    "VONDS市原FCレディースU-15 チーム別得点ランキング",
+    "VONDS市原FCレディースU-15 得点ランキング",
+    "ちふれASエルフェン埼玉マリU-15 チーム別得点ランキング",
+    "ちふれASエルフェン埼玉マリU-15 得点ランキング",
+    "ザスパ群馬レディースU-15 チーム別得点ランキング",
+    "ザスパ群馬レディースU-15 得点ランキング",
+    "ジェフユナイテッド市原・千葉レディースU-15 チーム別得点ランキング",
+    "ジェフユナイテッド市原・千葉レディースU-15 得点ランキング",
+    "スフィーダ世田谷FCユース チーム別得点ランキング",
+    "スフィーダ世田谷FCユース 得点ランキング",
+    "ノジマステラ神奈川相模原アヴェニーレ チーム別得点ランキング",
+    "ノジマステラ神奈川相模原アヴェニーレ 得点ランキング",
+    "三菱重工浦和レッズレディースジュニアユース チーム別得点ランキング",
+    "三菱重工浦和レッズレディースジュニアユース 得点ランキング",
+    "十文字中学校 チーム別得点ランキング",
+    "十文字中学校 得点ランキング",
+    "小美玉フットボールアカデミー チーム別得点ランキング",
+    "小美玉フットボールアカデミー 得点ランキング",
+    "栃木SCレディース チーム別得点ランキング",
+    "栃木SCレディース 得点ランキング",
+    "横須賀シーガルズMEG チーム別得点ランキング",
+    "横須賀シーガルズMEG 得点ランキング",
+    "湘南ベルマーレU-15ガールズ チーム別得点ランキング",
+    "湘南ベルマーレU-15ガールズ 得点ランキング"
+  ],
+  "people_count": 345,
+  "team_count": 32,
+  "drops": [
+    {
+      "team": "ザスパ群馬レディースU-15 チーム別得点ランキング",
+      "row": [
+        "3",
+        "茂木暖40",
+        "ザスパ群馬レディースU-15",
+        "1"
+      ],
+      "reason": "no-name-cell"
+    },
+    {
+      "team": "VONDS市原FCレディースU-15 チーム別得点ランキング",
+      "row": [
+        "5",
+        "保坂美海40",
+        "VONDS市原FCレディースU-15",
+        "1"
+      ],
+      "reason": "no-name-cell"
+    }
+  ],
+  "archived": {
+    "moved": [
+      "index_kngsafe_final19.html",
+      "team_players_final19.html",
+      "team_totals_final19.html",
+      "ranking_log_vFinal19.json"
+    ],
+    "dest": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251022_211958"
+  }
+}
