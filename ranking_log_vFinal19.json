@@ -1,0 +1,12 @@
+{
+  "version": "Final19",
+  "sources": 32,
+  "raw_rows": 390,
+  "unique_players": 313,
+  "unique_teams": 20,
+  "output": {
+    "index": "index_kngsafe_final19.html",
+    "team_players": "team_players_final19.html",
+    "team_totals": "team_totals_final19.html"
+  }
+}
