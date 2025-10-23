@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-10-24 08:52:29",
+  "sources": [
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251024_085228/team_players_final32.html",
+      "rows": 21
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251024_085228/team_players_final31.html",
+      "rows": 6
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251023_222900/team_players_final30.html",
+      "rows": 6
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251023_221538/team_players_final25.html",
+      "rows": 182
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251023_195101/team_players_final25.html",
+      "rows": 182
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251023_004517/team_players_final22.html",
+      "rows": 313
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251022_225626/team_players_final21.html",
+      "rows": 345
+    },
+    {
+      "path": "/sdcard/Download/sakana-no-osama.github.io/_old_backup/20251022_211958/team_players_final19.html",
+      "rows": 313
+    }
+  ],
+  "rows_extracted": 1368,
+  "unique_players": 555,
+  "unique_teams": 18
+}
