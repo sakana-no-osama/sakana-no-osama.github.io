@@ -1,0 +1,7 @@
+{
+  "mode": "fallback",
+  "sources": [],
+  "players_count": 0,
+  "teams_count": 0,
+  "note": "live if available; else fallback; name-minute/PK/number/punct cleaned; NFKC; (name,team) dedupe"
+}
