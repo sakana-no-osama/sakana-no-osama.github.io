@@ -1,20 +1,20 @@
 {
   "index": {
-    "verdict": "missing",
-    "meta": null,
-    "rows": null,
-    "used_bs4": false
+    "verdict": "no-table",
+    "meta": "utf-8",
+    "rows": 0,
+    "used_bs4": true
   },
   "player": {
-    "verdict": "missing",
-    "meta": null,
-    "rows": null,
-    "used_bs4": false
+    "verdict": "no-table",
+    "meta": "utf-8",
+    "rows": 0,
+    "used_bs4": true
   },
   "totals": {
-    "verdict": "missing",
-    "meta": null,
-    "rows": null,
-    "used_bs4": false
+    "verdict": "no-table",
+    "meta": "utf-8",
+    "rows": 0,
+    "used_bs4": true
   }
 }
