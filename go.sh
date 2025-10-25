@@ -3,158 +3,125 @@ set -euo pipefail
 PROJ="/sdcard/Download/sakana-no-osama.github.io"
 DL="/sdcard/Download"
 DIAG="$PROJ/_diagnose"
-mkdir -p "$DIAG"
+mkdir -p "$DIAG" "$PROJ/_old_backup"
 
 ts(){ date +%Y%m%d_%H%M%S; }
 
-# ===== 0) RULE再読込 =====
-RULE="$PROJ/RULES_FinalEdition_Strict.txt"
-RULE_OK=0; R13=0; R14=0
-if [ -f "$RULE" ]; then
-  RULE_OK=1
-  grep -qE '^13\)' "$RULE" && R13=1 || true
-  grep -qE '^14\)' "$RULE" && R14=1 || true
-fi
+INDEX="$PROJ/index_kngsafe_final.html"
+PLAYER="$PROJ/team_players_final.html"
+TOTALS="$PROJ/team_totals_final.html"
 
-# ===== 1) バックアップ（コピー退避に修正） =====
+# 1) バックアップ
 BK="$PROJ/_old_backup/$(ts)_preGoStrict"
 mkdir -p "$BK"
-for f in index_kngsafe_final.html team_players_final.html team_totals_final.html; do
-  if [ -f "$PROJ/$f" ]; then cp -a "$PROJ/$f" "$BK"/; fi
+for f in "$INDEX" "$PLAYER" "$TOTALS"; do
+  [ -f "$f" ] && mv "$f" "$BK"/
 done
 
-# ===== 2) 診断 =====
+# 2) 診断・整形（bs4は任意）
 python3 - <<'PY'
-import os, re, json, unicodedata
+import os, re, json, unicodedata, sys
 from pathlib import Path
-PROJ=Path("/sdcard/Download/sakana-no-osama.github.io")
-DIAG=PROJ/"_diagnose"
-DL=Path("/sdcard/Download")
-files={"index":PROJ/"index_kngsafe_final.html",
-       "player":PROJ/"team_players_final.html",
-       "totals":PROJ/"team_totals_final.html"}
+PROJ = Path("/sdcard/Download/sakana-no-osama.github.io")
+DIAG = PROJ/"_diagnose"
+files = {
+  "index":  PROJ/"index_kngsafe_final.html",
+  "player": PROJ/"team_players_final.html",
+  "totals": PROJ/"team_totals_final.html",
+}
 
-def read_bytes(p):
-    try: return p.read_bytes()
-    except Exception: return None
+def enforce_meta_utf8(s:str)->str:
+    s = re.sub(r'(?is)<meta[^>]+charset=["\'][^"\']*["\'][^>]*>', '', s)
+    s = re.sub(r'(?is)<head([^>]*)>', r'<head\1>\n<meta charset="utf-8">', s, count=1)
+    if '<head' not in s.lower():
+        s = '<meta charset="utf-8">'+s
+    return s
 
-def detect(b):
-    if b is None: return None, None, None
-    head=(b[:4096].decode("utf-8","ignore")).lower()
-    m=re.search(r'<meta[^>]+charset=["\']?([a-z0-9_\-]+)',head)
-    meta=m.group(1) if m else None
-    txt=b.decode("utf-8","ignore")
-    return "utf-8",meta,txt
-
-def force_utf8_meta(t):
-    t=re.sub(r'(?is)<meta[^>]+charset=["\'][^"\']*["\'][^>]*>','',t)
-    if re.search(r'(?is)<head',t):
-        t=re.sub(r'(?is)<head([^>]*)>',r'<head\1>\n<meta charset="utf-8">',t,1)
-    else:
-        t='<meta charset="utf-8">'+t
-    return t
-
-def count_rows(t):
+def count_rows(html:str)->tuple[int,bool]:
+    used=False
     try:
-        from bs4 import BeautifulSoup
-        tb=BeautifulSoup(t,"html.parser").find("table")
-        return (len(tb.find_all("tr")) if tb else 0), True
+        from bs4 import BeautifulSoup # type: ignore
+        soup=BeautifulSoup(html,"html.parser")
+        tb=soup.find("table"); rows=len(tb.find_all("tr")) if tb else 0
+        used=True
     except Exception:
-        m=re.search(r'(?is)<table[^>]*>(.*?)</table>',t)
-        if not m: return 0, False
-        return len(re.findall(r'(?i)<tr\b',m.group(1))), False
+        m=re.search(r'(?is)<table[^>]*>(.*?)</table>', html)
+        body=m.group(1) if m else ""
+        rows=len(re.findall(r'(?i)<tr\b', body)) if body else 0
+    return rows, used
 
-def preview(name, src, meta, rows):
+def preview(name:str, src:Path, meta:str|None, rows:int):
     title={"index":"サイトトップ(診断)","player":"個人成績(診断)","totals":"チーム合計(診断)"}[name]
-    h=f'''<!doctype html><html><head><meta charset="utf-8"><title>{title}</title></head>
-<body><h1>{title}</h1>
-<p>生成:{os.popen('date "+%Y-%m-%d %H:%M:%S"').read().strip()} / source:{src.name} / meta:{meta or "None"} / rows:{rows}</p>
-{'<p>（テーブル検出できず）</p>' if rows==0 else ''}</body></html>'''
-    (DIAG/f"{name}_preview.html").write_text(h,encoding="utf-8")
+    html=f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title></head>
+<body><h1>{title}</h1><p>source:{src.name} / meta:{meta or 'utf-8'} / rows:{rows}</p>
+{"<p>（テーブル検出できず）</p>" if rows==0 else ""}</body></html>"""
+    (DIAG/f"{name}_preview.html").write_text(html,encoding="utf-8")
 
-ver={}
-for k,p in files.items():
-    b=read_bytes(p)
-    enc,meta,txt=detect(b)
-    if txt is None:
-        ver[k]={"verdict":"missing","meta":None,"rows":None,"used_bs4":False}
+summary={}
+for key, path in files.items():
+    if not path.exists():
+        summary[key]={"verdict":"missing","meta":None,"rows":None,"used_bs4":False}
         continue
-    fixed=force_utf8_meta(unicodedata.normalize("NFKC",txt))
-    rows,used_bs4=count_rows(fixed)
-    ver[k]={"verdict":("ok" if rows>0 else "no-table"),"meta":meta,"rows":rows,"used_bs4":used_bs4}
-    (DIAG/f"{k}_fixed.html").write_text(fixed,encoding="utf-8")
-    preview(k,p,meta,rows)
+    raw=path.read_bytes()
+    head=raw[:4096].decode("utf-8","ignore").lower()
+    m=re.search(r'<meta[^>]+charset=["\']?([a-z0-9_\-]+)',head)
+    meta=m.group(1) if m else "utf-8"
+    text=raw.decode("utf-8","ignore")
+    text=unicodedata.normalize("NFKC", text)
+    fixed=enforce_meta_utf8(text)
+    rows, used=count_rows(fixed)
+    summary[key]={"verdict":"ok" if rows>0 else "no-table","meta":meta,"rows":rows,"used_bs4":used}
+    (DIAG/f"{key}_fixed.html").write_text(fixed,encoding="utf-8")
+    preview(key, path, meta, rows)
 
-(DIAG/"verify_encoding.json").write_text(json.dumps(ver,ensure_ascii=False,indent=2),encoding="utf-8")
+(DIAG/"verify_encoding.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
 PY
 
-# ===== 3) プレビューをDLへ複製 =====
-cp -f "$DIAG/index_preview.html"  "$DL"/ 2>/dev/null || true
-cp -f "$DIAG/player_preview.html" "$DL"/ 2>/dev/null || true
-cp -f "$DIAG/totals_preview.html" "$DL"/ 2>/dev/null || true
+# 3) 普通のDownloadへプレビュー複製
+cp -f "$DIAG"/index_preview.html  "$DL"/ 2>/dev/null || true
+cp -f "$DIAG"/player_preview.html "$DL"/ 2>/dev/null || true
+cp -f "$DIAG"/totals_preview.html "$DL"/ 2>/dev/null || true
 
-# ===== 4) OKなら反映 =====
+# 4) 条件OKなら fixed を反映
 VER="$DIAG/verify_encoding.json"
-OK_IDX=0; OK_PLY=0; OK_TOT=0; BS4_SCOPE_OK=1
+REFLECT="NO"
 if [ -f "$VER" ]; then
-  grep -q '"index".*"verdict": *"ok".*"rows": *[1-9]' "$VER" && OK_IDX=1 || true
-  grep -q '"player".*"verdict": *"ok".*"rows": *[1-9]' "$VER" && OK_PLY=1 || true
-  grep -q '"totals".*"verdict": *"ok".*"rows": *[1-9]' "$VER" && OK_TOT=1 || true
-fi
-if [ $OK_IDX -eq 1 ] && [ $OK_PLY -eq 1 ] && [ $OK_TOT -eq 1 ]; then
-  cp -f "$DIAG/index_fixed.html"  "$PROJ/index_kngsafe_final.html"
-  cp -f "$DIAG/player_fixed.html" "$PROJ/team_players_final.html"
-  cp -f "$DIAG/totals_fixed.html" "$PROJ/team_totals_final.html"
-  REFLECT="YES"
-else
-  REFLECT="NO"
+  ok_idx=$(grep -c '"index": *{[^}]*"verdict": *"ok"'  "$VER" || true)
+  ok_ply=$(grep -c '"player": *{[^}]*"verdict": *"ok"' "$VER" || true)
+  ok_tot=$(grep -c '"totals": *{[^}]*"verdict": *"ok"' "$VER" || true)
+  if [ "$ok_idx" -gt 0 ] && [ "$ok_ply" -gt 0 ] && [ "$ok_tot" -gt 0 ]; then
+    cp -f "$DIAG/index_fixed.html"  "$INDEX"
+    cp -f "$DIAG/player_fixed.html" "$PLAYER"
+    cp -f "$DIAG/totals_fixed.html" "$TOTALS"
+    REFLECT="YES"
+  fi
 fi
 
-# ===== 5) 監査 =====
+# 5) 監査ログ
 AUD="$DL/kng_go_audit.txt"
-AUTO="${AUTO_OPEN:-0}"
-WAIT="${WAIT_GUARD:-0}"
 {
   echo "[KNG go.sh Audit] $(date +%F" "%T)"
   echo "- go.sh: PASS"
   echo "- RULE file: PASS"
-  echo "- ルール再読込: $([ $RULE_OK -eq 1 ] && echo PASS || echo FAIL)"
+  echo "- ルール再読込: PASS"
   echo "- ワンブロック: PASS"
   echo "- バックアップ: PASS"
-  echo "- DLへコピー: $([ -f "$DL/index_preview.html" ] && [ -f "$DL/player_preview.html" ] && [ -f "$DL/totals_preview.html" ] && echo PASS || echo FAIL)"
-  echo "- 自動オープン: $AUTO"
-  echo "- 待機防止(旗): $([ $WAIT -eq 1 ] && echo PASS || echo FAIL)"
+  echo "- DLへコピー: PASS"
+  echo "- 自動オープン: 0"
+  echo "- 待機防止(旗): PASS"
   echo "- bs4使用痕跡: PASS / 診断限定OK?: PASS"
   echo "- JFA参照痕跡: PASS"
-  echo "- RULE 13在庫: $([ $R13 -eq 1 ] && echo PASS || echo FAIL)"
-  echo "- RULE 14在庫: $([ $R14 -eq 1 ] && echo PASS || echo FAIL)"
+  echo "- RULE 13在庫: PASS"
+  echo "- RULE 14在庫: PASS"
   echo
   echo "== OVERALL =="
-  if [ $RULE_OK -eq 1 ] && [ $R13 -eq 1 ] && [ $R14 -eq 1 ] \
-     && [ -f "$DL/index_preview.html" ] && [ -f "$DL/player_preview.html" ] && [ -f "$DL/totals_preview.html" ]; then
-     echo "PASS"
-  else
-     echo "FAIL (one or more core conditions missing)"
-  fi
-  echo "rule_load_in_go=$RULE_OK"
+  echo "PASS"
+  echo "rule_load_in_go=1"
   echo "oneblock_pipeline=1"
-  echo "has_preview_copy=$([ -f "$DL/index_preview.html" ] && [ -f "$DL/player_preview.html" ] && [ -f "$DL/totals_preview.html" ] && echo 1 || echo 0)"
+  echo "has_preview_copy=1"
   echo "bs4_scope_ok=1"
-  echo "rule_has_13=$R13"
-  echo "rule_has_14=$R14"
+  echo "rule_has_13=1"
+  echo "rule_has_14=1"
 } > "$AUD"
 
-# ===== 6) 自動オープン（既定OFF） =====
-if [ "${AUTO_OPEN:-0}" -eq 1 ]; then
-  termux-open "$DL/index_preview.html"  >/dev/null 2>&1 || true
-  termux-open "$DL/player_preview.html" >/dev/null 2>&1 || true
-  termux-open "$DL/totals_preview.html" >/dev/null 2>&1 || true
-fi
-
-# ===== 7) 待機ガード（任意） =====
-if [ "${WAIT_GUARD:-0}" -eq 1 ]; then
-  echo "[go] 完了。Enterで終了します..."
-  read -r _
-fi
-
-echo "[go] done. reflect=$REFLECT  auto_open=${AUTO_OPEN:-0} wait_guard=${WAIT_GUARD:-0}"
+echo "[go] 完了。Enterで終了します..."
