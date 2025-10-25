@@ -1,7 +1,9 @@
-FinalEdition-Strict v2.6
-13) ワンブロック一括：呼び出し準備→コード全文→実行→DLコピー→監査。分割/後出しなし。
-14) 普通のDownloadへ *_preview.html を毎回複製（index/player/totals）。
-- 軽量最優先：標準ライブラリ基準。pandas等の重量級は不使用。bs4は診断限定で任意。
-- 自動プレビューOFF既定（必要時のみAUTO_OPEN=1）。待機画面には戻さない運用。
-- 安全：上書き前に _old_backup/yyyymmdd_HHMMSS_* へ退避。壊れ/空は反映しない。
-- 出力：1部/2部/総合/チーム別＋検証ログ(JSON)の方針を維持（本スクリプトは診断・反映・複製・監査を担当）。
+FinalEdition-Strict
+- ワンブロック一括（準備→コード全文→実行→DLコピー→監査）。途中停止なし
+- 軽量最優先：標準ライブラリ基準。pandas等の重量級NG
+- bs4(BeautifulSoup)は“入っていれば診断でのみ使用”。未導入でも動作
+- 自動プレビューOFF既定（AUTO_OPEN=1でON可）、待機画面に戻さない運用
+- バックアップ→診断(テーブル検出/UTF-8強制)→OK時のみ反映。壊れ/不要は隔離
+- 出力：1部/2部/総合/チーム別(将来拡張) ＋ 検証ログ(JSON)
+- *_preview.html を普通のDownloadへ複製
+- 監査を kng_go_audit.txt に記録（rule_load_in_go/oneblock/bs4_scope 等）
