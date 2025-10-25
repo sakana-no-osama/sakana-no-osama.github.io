@@ -1,0 +1,15 @@
+KNG FinalEdition-Strict v2.4
+1) 呼び出し準備→コード全文→実行/確認→(任意)push をワンブロック
+2) 標準ライブラリ基準（pandas等は禁止）/ bs4は“入っていれば診断限定で使用”
+3) Android/Termux前提。対象ファイルのみ処理
+4) 上書き前に _old_backup/yyyymmdd_HHMMSS_preGoStrict へコピー退避
+5) 破損/空/不正は _diagnose に記録しプレビュー生成
+6) プレビューを /sdcard/Download へ複製（index/player/totals）
+7) 自動オープン: 既定OFF（AUTO_OPEN=1 でON）
+8) 待機ガード: 既定OFF（WAIT_GUARD=1 でEnter待ち）
+9) 生成物: index_kngsafe_final.html / team_players_final.html / team_totals_final.html
+10) index.htmlや他領域は不変更
+11) 失敗時はロールバック再実行
+12) 検証ログ: verify_encoding.json（verdict/meta/rows/used_bs4）
+13) ワンペースト一括（バックアップ→診断→DLコピー→(OKなら)反映）
+14) 監査ログ: kng_go_audit.txt にマーカー出力

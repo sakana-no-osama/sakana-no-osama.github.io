@@ -1,0 +1,20 @@
+{
+  "index": {
+    "verdict": "missing",
+    "meta": null,
+    "rows": null,
+    "used_bs4": false
+  },
+  "player": {
+    "verdict": "missing",
+    "meta": null,
+    "rows": null,
+    "used_bs4": false
+  },
+  "totals": {
+    "verdict": "missing",
+    "meta": null,
+    "rows": null,
+    "used_bs4": false
+  }
+}
