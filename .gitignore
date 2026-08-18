@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+
+.work_v39/
+_old_backup/
+_publish_backup/
+
+U15RANK_ALL_v3.html
+U15RANK_KANTO1_v3.html
+U15RANK_KANTO2_v3.html
+index_kngsafe_v3.html
+team_players_v3.html
+team_totals_v3.html

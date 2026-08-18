@@ -1,0 +1,17 @@
+﻿rank,team,division,goals,scorer_count,match_count,top_scorer,note
+1,INAC千葉CRAVO FC,ALL,69,15,12,牧野菜々(12),
+1,湘南ベルマーレU-15ガールズ,ALL,69,16,12,新田千穂(13),team_heading_not_in_match:湘南ベルマーレU-15ガールズ
+3,スフィーダ世田谷FCユース,ALL,65,17,13,松田千紗(17),team_heading_not_in_match:スフィーダ世田谷FCユース
+4,十文字中学校,ALL,44,16,9,曽雌心美(7),
+5,大宮アルディージャVENTUS U15,ALL,42,17,13,関根舞彩(7),team_heading_not_in_match:大宮アルディージャVENTUS U15
+6,栃木SCレディース,ALL,41,15,11,丹野柚(9),score_mismatch:expected=13:actual=12
+7,三菱重工浦和レッズレディースジュニアユース,ALL,38,10,12,徳生花音(14),
+8,ジェフユナイテッド市原・千葉レディースU-15,ALL,24,12,10,吉川葵(8),
+9,VONDS市原FCレディ－スU-15,ALL,23,7,10,田中葉色(9),
+10,ノジマステラ神奈川相模原アヴェニーレ,ALL,19,11,10,野口みどり(4),team_heading_not_in_match:ノジマステラ神奈川相模原アヴェニーレ
+11,INAC白岡SCレディース,ALL,16,10,8,小倉那月(5),team_heading_not_in_match:INAC白岡SCレディース
+11,ザスパ群馬レディースU-15,ALL,16,8,6,茂木暖(6),
+11,横須賀シーガルズMEG,ALL,16,10,9,柴田結月(5),
+14,小美玉フットボールアカデミー,ALL,12,7,6,山本渚子(3),team_heading_not_in_match:小美玉フットボールアカデミー
+15,ちふれASエルフェン埼玉マリU-15,ALL,7,6,6,西脇姫花(2),
+16,TRAUM SVレディースU-15,ALL,4,2,4,川田月葉(2)|舘崎舞彩子(2),

@@ -1,0 +1,9 @@
+﻿rank,team,division,goals,scorer_count,match_count,top_scorer,note
+1,INAC千葉CRAVO FC,2部,69,15,12,牧野菜々(12),
+1,湘南ベルマーレU-15ガールズ,2部,69,16,12,新田千穂(13),team_heading_not_in_match:湘南ベルマーレU-15ガールズ
+3,スフィーダ世田谷FCユース,2部,65,17,13,松田千紗(17),team_heading_not_in_match:スフィーダ世田谷FCユース
+4,十文字中学校,2部,44,16,9,曽雌心美(7),
+5,大宮アルディージャVENTUS U15,2部,42,17,13,関根舞彩(7),team_heading_not_in_match:大宮アルディージャVENTUS U15
+6,栃木SCレディース,2部,41,15,11,丹野柚(9),score_mismatch:expected=13:actual=12
+7,ザスパ群馬レディースU-15,2部,16,8,6,茂木暖(6),
+8,TRAUM SVレディースU-15,2部,4,2,4,川田月葉(2)|舘崎舞彩子(2),
