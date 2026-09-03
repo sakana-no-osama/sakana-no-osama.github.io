@@ -57,14 +57,12 @@ def read_goal_events(path: Path) -> List[dict]:
 
     rows: List[dict] = []
 
-    with path.open("r", encoding="utf-8-sig", newline="") as f:
+    with path.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
 
-        required = {
+        required_cols = {
             "match_id",
             "division",
-            "match_date",
-            "section",
             "team",
             "player",
             "goals",
@@ -73,7 +71,7 @@ def read_goal_events(path: Path) -> List[dict]:
             "note",
         }
 
-        missing_cols = required - set(reader.fieldnames or [])
+        missing_cols = required_cols - set(reader.fieldnames or [])
         if missing_cols:
             raise HoldError(f"missing columns in goal_events_2026.csv: {sorted(missing_cols)}")
 
@@ -89,17 +87,17 @@ def read_goal_events(path: Path) -> List[dict]:
                 raise HoldError(f"blank match_id at csv line {i}")
             if not division:
                 raise HoldError(f"blank division at match_id={match_id}")
+
+            goals = safe_int(goals_raw, f"goals at match_id={match_id}")
+
+            # 0-0試合などの診断行はCSVには残すが、ランキング集計からは除外する。
+            if goals <= 0:
+                continue
+
             if not team:
                 raise HoldError(f"blank team at match_id={match_id}")
             if not player:
                 raise HoldError(f"blank player at match_id={match_id}")
-
-            goals = safe_int(goals_raw, f"goals at match_id={match_id}")
-
-            if goals <= 0:
-                # 得点ランキングなので0点行は集計対象外。
-                # ただし、この時点で0点行があるなら構造確認対象として止める。
-                raise HoldError(f"non-positive goals row found: match_id={match_id}, player={player}, goals={goals}")
 
             rows.append(
                 {
@@ -116,7 +114,6 @@ def read_goal_events(path: Path) -> List[dict]:
         raise HoldError("no goal event rows found")
 
     return rows
-
 
 def aggregate(rows: Sequence[dict], division_filter: str | None) -> List[RankingRow]:
     """
