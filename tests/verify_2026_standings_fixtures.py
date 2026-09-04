@@ -1,8 +1,10 @@
 """Verify 2026 standings, aliases, and internal league invariants."""
 from __future__ import annotations
 import csv
+import re
 import sys
 from collections import Counter, defaultdict
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,6 +93,41 @@ def invariants(division: str, rows: list[dict[str,str]], matches: int) -> None:
     if any(r["goal_difference"]!=r["goals_for"]-r["goals_against"] for r in n): raise ValueError(division+": GD mismatch")
     if any(r["points"]!=r["wins"]*3+r["draws"] for r in n): raise ValueError(division+": points mismatch")
 
+FIXTURES = DATA / "next_fixtures_2026.csv"
+FIXTURE_FIELDS = ["division","section","match_id","match_date","kickoff","home_team","away_team","venue","source_url","status","note"]
+
+def verify_fixtures(masters: dict[str,set[str]]) -> str:
+    header,fixture_rows=read(FIXTURES)
+    if header!=FIXTURE_FIELDS: raise ValueError("next_fixtures_2026.csv: invalid columns")
+    if len(fixture_rows)!=8: raise ValueError(f"next fixtures rows={len(fixture_rows)} expected=8")
+    all_ids=set(); summaries=[]
+    for division in ("1部","2部"):
+        rows=[row for row in fixture_rows if (row.get("division") or "").strip()==division]
+        if len(rows)!=4: raise ValueError(f"{division}: fixtures={len(rows)} expected=4")
+        sections={(row.get("section") or "").strip() for row in rows}
+        if len(sections)!=1 or "" in sections: raise ValueError(f"{division}: fixtures must use one nonblank section")
+        appearances=[]
+        for row in rows:
+            match_id=(row.get("match_id") or "").strip(); home=(row.get("home_team") or "").strip(); away=(row.get("away_team") or "").strip()
+            venue=(row.get("venue") or "").strip(); source=(row.get("source_url") or "").strip()
+            if not match_id or match_id in all_ids: raise ValueError(f"blank or duplicate fixture match_id: {match_id!r}")
+            all_ids.add(match_id)
+            if home not in masters[division] or away not in masters[division] or home==away: raise ValueError(f"{division}: invalid fixture teams")
+            if not venue: raise ValueError(f"{match_id}: blank venue")
+            if (row.get("status") or "").strip()!="scheduled" or (row.get("note") or "").strip(): raise ValueError(f"{match_id}: invalid status or note")
+            try:
+                datetime.strptime((row.get("match_date") or "").strip(),"%Y-%m-%d")
+                datetime.strptime((row.get("kickoff") or "").strip(),"%H:%M")
+            except ValueError as exc: raise ValueError(f"{match_id}: invalid date or kickoff") from exc
+            code="D1" if division=="1部" else "D2"
+            if not re.fullmatch(rf"2026_{code}_m\d{{2}}",match_id): raise ValueError(f"{match_id}: invalid fixture ID")
+            expected_prefix=f"https://u15.kantolsl.com/2026/div{'1' if division=='1部' else '2'}/m"
+            if not source.startswith(expected_prefix) or not source.endswith("/"): raise ValueError(f"{match_id}: invalid source URL")
+            appearances.extend((home,away))
+        if set(appearances)!=masters[division] or len(appearances)!=len(set(appearances)): raise ValueError(f"{division}: next section must contain all 8 teams once")
+        summaries.append(f"{division} {next(iter(sections))}: fixtures=4")
+    return " / ".join(summaries)
+
 def main() -> int:
     try:
         masters,aliases=load_names(); _,matches=read(MATCHES)
@@ -101,7 +138,7 @@ def main() -> int:
             if actual!=expected_rows: raise ValueError(f"{division}: output mismatch")
             invariants(division,actual,match_count)
             print(f"{division}: teams={len(actual)} matches={match_count} alias_uses={alias_uses} tied_hold={sum(r['note']=='tied_hold' for r in actual)}")
-        print("fixtures=NOT_IMPLEMENTED_PHASE1")
+        print("fixtures: "+verify_fixtures(masters))
         print("VERDICT=PASS"); return 0
     except (OSError,csv.Error,ValueError) as exc:
         print(f"VERDICT=FAIL\nFAIL_REASON={exc}",file=sys.stderr); return 1
