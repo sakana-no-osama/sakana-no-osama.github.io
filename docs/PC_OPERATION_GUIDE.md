@@ -42,3 +42,7 @@ tools/ranking_update_2026.shは旧Termux用として残し、変更せず、PC�
 - 検証失敗、検証スクリプト不在、必須パス不在: FAIL。
 
 このスクリプトは確認専用であり、ファイル変更、stage、commit、push、index.html上書きを行わない。
+
+## Codexへの更新依頼
+
+通常のランキング更新は、Codexへ基本的に「更新して」と依頼する。Codexは作業開始前に docs/CODEX_UPDATE_RULES.md を読み、同ファイルから指定される関連ルールと本手順書を確認してから更新を開始する。
