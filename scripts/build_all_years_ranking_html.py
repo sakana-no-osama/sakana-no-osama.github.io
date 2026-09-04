@@ -20,6 +20,9 @@ INPUTS = {
         "team_all": "team_ranking_2026_all.csv",
         "team_div1": "team_ranking_2026_div1.csv",
         "team_div2": "team_ranking_2026_div2.csv",
+        "standings_div1": "league_standings_2026_div1.csv",
+        "standings_div2": "league_standings_2026_div2.csv",
+        "fixtures_all": "next_fixtures_2026.csv",
     },
     "2025": {
         "player_all": "goal_ranking_2025_all.csv",
@@ -107,6 +110,40 @@ def validate_team_rows(rows: Sequence[dict], source: str) -> None:
             raise HoldError(f"{source}: invalid goals at csv line {i}")
 
 
+def validate_standings_rows(rows: Sequence[dict], source: str) -> None:
+    required = [
+        "rank", "team", "division", "played", "wins", "draws", "losses",
+        "goals_for", "goals_against", "goal_difference", "points", "note",
+    ]
+    for col in required:
+        if col not in rows[0]:
+            raise HoldError(f"{source}: missing column {col}")
+    for i, r in enumerate(rows, start=2):
+        if not (r.get("rank") or "").strip() or not (r.get("team") or "").strip():
+            raise HoldError(f"{source}: blank rank or team at csv line {i}")
+        for col in ["played", "wins", "draws", "losses", "goals_for", "goals_against", "points"]:
+            if not (r.get(col) or "").strip().isdigit():
+                raise HoldError(f"{source}: invalid {col} at csv line {i}")
+        try:
+            int((r.get("goal_difference") or "").strip())
+        except ValueError as e:
+            raise HoldError(f"{source}: invalid goal_difference at csv line {i}") from e
+
+
+def validate_fixture_rows(rows: Sequence[dict], source: str) -> None:
+    required = [
+        "division", "section", "match_id", "match_date", "kickoff",
+        "home_team", "away_team", "venue", "source_url", "status", "note",
+    ]
+    for col in required:
+        if col not in rows[0]:
+            raise HoldError(f"{source}: missing column {col}")
+    for i, r in enumerate(rows, start=2):
+        for col in ["division", "section", "match_id", "match_date", "home_team", "away_team", "status"]:
+            if not (r.get(col) or "").strip():
+                raise HoldError(f"{source}: blank {col} at csv line {i}")
+
+
 def load_datasets() -> Dict[str, Dataset]:
     datasets: Dict[str, Dataset] = {}
 
@@ -121,6 +158,12 @@ def load_datasets() -> Dict[str, Dataset]:
             elif key.startswith("team_"):
                 validate_team_rows(rows, filename)
                 kind = "team"
+            elif key.startswith("standings_"):
+                validate_standings_rows(rows, filename)
+                kind = "standings"
+            elif key.startswith("fixtures_"):
+                validate_fixture_rows(rows, filename)
+                kind = "fixtures"
             else:
                 raise HoldError(f"unknown input key: {key}")
 
@@ -193,6 +236,43 @@ def build_team_table_rows(rows: Sequence[dict]) -> str:
     return "\n".join(out)
 
 
+def build_standings_table_rows(rows: Sequence[dict]) -> str:
+    out = []
+    for r in rows:
+        out.append(
+            "<tr>"
+            f"<td class=\"rank\">{esc(r.get('rank'))}</td>"
+            f"<td class=\"team\">{esc(r.get('team'))}</td>"
+            f"<td class=\"num\">{esc(r.get('played'))}</td>"
+            f"<td class=\"num\">{esc(r.get('wins'))}</td>"
+            f"<td class=\"num\">{esc(r.get('draws'))}</td>"
+            f"<td class=\"num\">{esc(r.get('losses'))}</td>"
+            f"<td class=\"num\">{esc(r.get('goals_for'))}</td>"
+            f"<td class=\"num\">{esc(r.get('goals_against'))}</td>"
+            f"<td class=\"num\">{esc(r.get('goal_difference'))}</td>"
+            f"<td class=\"num\">{esc(r.get('points'))}</td>"
+            "</tr>"
+        )
+    return "\n".join(out)
+
+
+def build_fixture_table_rows(rows: Sequence[dict]) -> str:
+    out = []
+    for r in rows:
+        out.append(
+            "<tr>"
+            f"<td>{esc(r.get('division'))}</td>"
+            f"<td>{esc(r.get('section'))}</td>"
+            f"<td>{esc(r.get('match_date'))}</td>"
+            f"<td>{esc(r.get('kickoff'))}</td>"
+            f"<td class=\"team\">{esc(r.get('home_team'))}</td>"
+            f"<td class=\"team\">{esc(r.get('away_team'))}</td>"
+            f"<td>{esc(r.get('venue'))}</td>"
+            "</tr>"
+        )
+    return "\n".join(out)
+
+
 def dataset_json(datasets: Dict[str, Dataset]) -> str:
     payload = {}
     for key, ds in datasets.items():
@@ -202,10 +282,10 @@ def dataset_json(datasets: Dict[str, Dataset]) -> str:
 
 def build_section(ds: Dataset) -> str:
     label_scope = {"all": "総合", "div1": "1部", "div2": "2部"}[ds.scope]
-    label_kind = "個人" if ds.kind == "player" else "チーム"
+    label_kind = {"player": "個人", "team": "チーム得点", "standings": "チーム順位", "fixtures": "次節カード"}[ds.kind]
     section_id = f"sec_{ds.year}_{ds.kind}_{ds.scope}"
 
-    goals = sum(safe_int(r.get("goals")) for r in ds.rows)
+    goals = sum(safe_int(r.get("goals")) for r in ds.rows) if ds.kind in {"player", "team"} else None
     note_rows = sum(1 for r in ds.rows if (r.get("note") or "").strip())
 
     if ds.kind == "player":
@@ -222,7 +302,7 @@ def build_section(ds: Dataset) -> str:
 """
         body = build_player_table_rows(ds.rows)
         helper = "チーム名をタップすると、そのチーム内の個人ランキングを表示します。"
-    else:
+    elif ds.kind == "team":
         header = """
 <thead>
 <tr>
@@ -237,6 +317,36 @@ def build_section(ds: Dataset) -> str:
 """
         body = build_team_table_rows(ds.rows)
         helper = "チーム名をタップすると、そのチーム内の個人ランキングを表示します。"
+    elif ds.kind == "standings":
+        header = """
+<thead>
+<tr>
+<th>順位</th><th>チーム</th><th>試合</th><th>勝</th><th>分</th><th>負</th>
+<th>得点</th><th>失点</th><th>得失点差</th><th>勝点</th>
+</tr>
+</thead>
+"""
+        body = build_standings_table_rows(ds.rows)
+        helper = "勝点、得失点差、総得点の順で集計した順位表です。"
+    else:
+        header = """
+<thead>
+<tr>
+<th>部</th><th>節</th><th>日付</th><th>開始</th>
+<th>ホーム</th><th>アウェイ</th><th>会場</th>
+</tr>
+</thead>
+"""
+        body = build_fixture_table_rows(ds.rows)
+        helper = "CSVで確認済みの次節カードです。"
+
+    stats = [f"<span>行数: {len(ds.rows)}</span>"]
+    if goals is not None:
+        stats.append(f"<span>得点: {goals}</span>")
+    stats.extend([
+        f"<span>note保持: {note_rows}</span>",
+        f"<span>出典: {esc(ds.source)}</span>",
+    ])
 
     return f"""
 <section id="{section_id}" class="ranking-section" data-year="{ds.year}" data-kind="{ds.kind}" data-scope="{ds.scope}">
@@ -245,10 +355,7 @@ def build_section(ds: Dataset) -> str:
     <h2>{esc(ds.year)} {esc(label_kind)}{esc(label_scope)}</h2>
     <p>{esc(helper)}</p>
     <div class="stats">
-      <span>行数: {len(ds.rows)}</span>
-      <span>得点: {goals}</span>
-      <span>note保持: {note_rows}</span>
-      <span>出典: {esc(ds.source)}</span>
+      {''.join(stats)}
     </div>
   </div>
   <div class="table-wrap">
@@ -269,6 +376,8 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
     order = [
         "2026_player_all", "2026_player_div1", "2026_player_div2",
         "2026_team_all", "2026_team_div1", "2026_team_div2",
+        "2026_standings_div1", "2026_standings_div2",
+        "2026_fixtures_all",
         "2025_player_all", "2025_player_div1", "2025_player_div2",
         "2025_team_all", "2025_team_div1", "2025_team_div2",
     ]
@@ -620,7 +729,9 @@ td.top-scorer {{
         <span class="control-label">表示</span>
         <div class="buttons" data-control="kind">
           <button type="button" data-value="player" class="active">個人</button>
-          <button type="button" data-value="team">チーム</button>
+          <button type="button" data-value="team">チーム得点</button>
+          <button type="button" data-value="standings" data-year-only="2026">チーム順位</button>
+          <button type="button" data-value="fixtures" data-year-only="2026">次節カード</button>
         </div>
       </div>
 
@@ -669,7 +780,32 @@ function currentSectionId() {{
   return `sec_${{state.year}}_${{state.kind}}_${{state.scope}}`;
 }}
 
+function normalizeSelection() {{
+  if (state.year === "2025" && (state.kind === "standings" || state.kind === "fixtures")) {{
+    state.kind = "player";
+  }}
+  if (state.kind === "standings" && state.scope === "all") {{
+    state.scope = "div1";
+  }}
+  if (state.kind === "fixtures") {{
+    state.scope = "all";
+  }}
+
+  document.querySelectorAll('[data-year-only="2026"]').forEach(btn => {{
+    btn.hidden = state.year !== "2026";
+  }});
+  document.querySelectorAll('[data-control="scope"] button').forEach(btn => {{
+    btn.hidden =
+      (state.kind === "standings" && btn.dataset.value === "all") ||
+      (state.kind === "fixtures" && btn.dataset.value !== "all");
+  }});
+  setActiveButtons("year", state.year);
+  setActiveButtons("kind", state.kind);
+  setActiveButtons("scope", state.scope);
+}}
+
 function showSection() {{
+  normalizeSelection();
   document.querySelectorAll(".ranking-section").forEach(sec => {{
     sec.classList.toggle("active", sec.id === currentSectionId());
   }});
@@ -757,7 +893,6 @@ document.querySelectorAll("[data-control] button").forEach(btn => {{
   btn.addEventListener("click", () => {{
     const group = btn.parentElement.dataset.control;
     state[group] = btn.dataset.value;
-    setActiveButtons(group, btn.dataset.value);
     showSection();
   }});
 }});
