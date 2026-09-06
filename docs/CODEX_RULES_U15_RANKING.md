@@ -28,8 +28,12 @@ note='scorers_block_not_found'
 
 ## 成功条件
 
-- goal_events_2026.csv の得点合計 = 194
-- goal_ranking_2026_all.csv の得点合計 = 194
-- team_ranking_2026_all.csv の得点合計 = 194
+- 特定の得点数を固定の成功条件にしない
+- 更新前の得点合計は比較用の参考値として扱い、更新後の成功条件には固定しない
+- 更新後は `python tests/verify_2026_rankings.py` の結果を正とする
+- 検証時点の `event_goals = rank_all_goals = team_all_goals` が一致
 - ALL / DIV1 / DIV2 で個人合計とチーム合計が一致
+- 2026年9月時点では218点であり、以後の正式な更新によって変動しうる
+- 過去の194点は当時の確認済み値であり、将来更新後の固定条件ではない
+- 得点合計または区分別合計が不一致の場合はHOLDまたはFAIL
 - VERDICT=PASS
