@@ -268,6 +268,11 @@ def parse_player_line(line: str) -> Tuple[str, int, List[str], str]:
     if not minutes:
         return player, count, minutes, f"minutes_blank:{raw}"
 
+    # The official page can list multiple own-goal minutes without a numeric
+    # suffix on the label. Each confirmed minute represents one own goal.
+    if player == "オウンゴール" and not m_count and len(minutes) > 1:
+        count = len(minutes)
+
     note = ""
     if len(minutes) != count:
         note = f"goal_count_minutes_mismatch:goals={count}:minutes={len(minutes)}"
