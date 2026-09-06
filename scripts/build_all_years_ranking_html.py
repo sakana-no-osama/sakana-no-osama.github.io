@@ -11,6 +11,9 @@ from typing import Dict, List, Sequence
 
 
 OUT_HTML = Path("U15RANK_ALL_YEARS.html")
+MATCH_RESULTS_CSV = "matches_2026_played.csv"
+GOAL_EVENTS_CSV = "goal_events_2026.csv"
+TEAM_ALIASES_CSV = "team_name_alias_2026.csv"
 
 INPUTS = {
     "2026": {
@@ -144,6 +147,122 @@ def validate_fixture_rows(rows: Sequence[dict], source: str) -> None:
                 raise HoldError(f"{source}: blank {col} at csv line {i}")
 
 
+def load_team_aliases() -> Dict[tuple[str, str], str]:
+    rows = read_csv_required(Path(TEAM_ALIASES_CSV))
+    required = ["raw_team", "canonical_team", "division"]
+    for col in required:
+        if col not in rows[0]:
+            raise HoldError(f"{TEAM_ALIASES_CSV}: missing column {col}")
+    aliases: Dict[tuple[str, str], str] = {}
+    for i, row in enumerate(rows, start=2):
+        raw = (row.get("raw_team") or "").strip()
+        canonical = (row.get("canonical_team") or "").strip()
+        division = (row.get("division") or "").strip()
+        if not raw or not canonical or division not in {"1部", "2部"}:
+            raise HoldError(f"{TEAM_ALIASES_CSV}: invalid alias at csv line {i}")
+        aliases[(division, raw)] = canonical
+    return aliases
+
+
+def load_match_result_datasets() -> Dict[str, Dataset]:
+    matches = read_csv_required(Path(MATCH_RESULTS_CSV))
+    events = read_csv_required(Path(GOAL_EVENTS_CSV))
+    aliases = load_team_aliases()
+    match_required = [
+        "match_id", "division", "match_date", "kickoff", "section",
+        "home_team", "away_team", "home_score", "away_score", "status",
+    ]
+    event_required = ["match_id", "division", "team", "player", "goals", "goal_minutes"]
+    for col in match_required:
+        if col not in matches[0]:
+            raise HoldError(f"{MATCH_RESULTS_CSV}: missing column {col}")
+    for col in event_required:
+        if col not in events[0]:
+            raise HoldError(f"{GOAL_EVENTS_CSV}: missing column {col}")
+
+    events_by_match: Dict[str, List[dict]] = {}
+    for i, event in enumerate(events, start=2):
+        goals_text = (event.get("goals") or "").strip()
+        if not goals_text.isdigit():
+            raise HoldError(f"{GOAL_EVENTS_CSV}: invalid goals at csv line {i}")
+        goals = int(goals_text)
+        if goals == 0:
+            continue
+        team = (event.get("team") or "").strip()
+        player = (event.get("player") or "").strip()
+        division = (event.get("division") or "").strip()
+        if not team or not player:
+            raise HoldError(f"{GOAL_EVENTS_CSV}: positive goal with blank team/player at csv line {i}")
+        normalized = dict(event)
+        normalized["team"] = aliases.get((division, team), team)
+        normalized["goals"] = goals_text
+        events_by_match.setdefault((event.get("match_id") or "").strip(), []).append(normalized)
+
+    result_rows: List[dict] = []
+    seen_match_ids = set()
+    for i, match in enumerate(matches, start=2):
+        match_id = (match.get("match_id") or "").strip()
+        division = (match.get("division") or "").strip()
+        if not match_id or match_id in seen_match_ids:
+            raise HoldError(f"{MATCH_RESULTS_CSV}: blank or duplicate match_id at csv line {i}")
+        seen_match_ids.add(match_id)
+        if (match.get("status") or "").strip() != "played":
+            raise HoldError(f"{MATCH_RESULTS_CSV}: non-played row at csv line {i}")
+        if division not in {"1部", "2部"}:
+            raise HoldError(f"{MATCH_RESULTS_CSV}: invalid division at csv line {i}")
+        home_score_text = (match.get("home_score") or "").strip()
+        away_score_text = (match.get("away_score") or "").strip()
+        if not home_score_text.isdigit() or not away_score_text.isdigit():
+            raise HoldError(f"{MATCH_RESULTS_CSV}: invalid score at csv line {i}")
+        home = aliases.get((division, (match.get("home_team") or "").strip()), (match.get("home_team") or "").strip())
+        away = aliases.get((division, (match.get("away_team") or "").strip()), (match.get("away_team") or "").strip())
+        if not home or not away or home == away:
+            raise HoldError(f"{MATCH_RESULTS_CSV}: invalid teams at csv line {i}")
+
+        match_events = events_by_match.get(match_id, [])
+        unknown_teams = {event["team"] for event in match_events} - {home, away}
+        if unknown_teams:
+            raise HoldError(f"{match_id}: scorer team not in match: {sorted(unknown_teams)}")
+        expected = int(home_score_text) + int(away_score_text)
+        actual = sum(int(event["goals"]) for event in match_events)
+        if actual != expected:
+            raise HoldError(f"{match_id}: score/scorer mismatch expected={expected} actual={actual}")
+
+        result_rows.append({
+            "match_id": match_id,
+            "division": division,
+            "match_date": (match.get("match_date") or "").strip(),
+            "kickoff": (match.get("kickoff") or "").strip(),
+            "section": (match.get("section") or "").strip(),
+            "home_team": home,
+            "away_team": away,
+            "home_score": home_score_text,
+            "away_score": away_score_text,
+            "home_scorers": [event for event in match_events if event["team"] == home],
+            "away_scorers": [event for event in match_events if event["team"] == away],
+        })
+
+    orphan_events = set(events_by_match) - seen_match_ids
+    if orphan_events:
+        raise HoldError(f"{GOAL_EVENTS_CSV}: events for unknown matches: {sorted(orphan_events)}")
+    result_rows.sort(
+        key=lambda row: (row["match_date"], row["kickoff"], row["match_id"]),
+        reverse=True,
+    )
+    source = f"{MATCH_RESULTS_CSV} + {GOAL_EVENTS_CSV}"
+    return {
+        "2026_results_all": Dataset("2026", "results", "all", result_rows, source),
+        "2026_results_div1": Dataset(
+            "2026", "results", "div1",
+            [row for row in result_rows if row["division"] == "1部"], source,
+        ),
+        "2026_results_div2": Dataset(
+            "2026", "results", "div2",
+            [row for row in result_rows if row["division"] == "2部"], source,
+        ),
+    }
+
+
 def load_datasets() -> Dict[str, Dataset]:
     datasets: Dict[str, Dataset] = {}
 
@@ -184,6 +303,7 @@ def load_datasets() -> Dict[str, Dataset]:
                 source=filename,
             )
 
+    datasets.update(load_match_result_datasets())
     return datasets
 
 
@@ -273,6 +393,46 @@ def build_fixture_table_rows(rows: Sequence[dict]) -> str:
     return "\n".join(out)
 
 
+def build_scorer_group(team: str, scorers: Sequence[dict]) -> str:
+    if not scorers:
+        body = '<p class="no-scorers">得点者なし</p>'
+    else:
+        items = []
+        for scorer in scorers:
+            goals = safe_int(scorer.get("goals"))
+            goals_label = f" ×{goals}" if goals > 1 else ""
+            minutes = esc(scorer.get("goal_minutes"))
+            minute_label = f'<span class="scorer-minutes">{minutes}</span>' if minutes else ""
+            items.append(
+                f'<li><span class="scorer-name">{esc(scorer.get("player"))}{goals_label}</span>'
+                f'{minute_label}</li>'
+            )
+        body = f'<ul class="scorer-list">{"".join(items)}</ul>'
+    return f'<div class="scorer-team"><h4>{esc(team)}</h4>{body}</div>'
+
+
+def build_result_cards(rows: Sequence[dict]) -> str:
+    cards = []
+    for index, row in enumerate(rows):
+        cards.append(
+            f'<article class="match-result-card" data-result-index="{index}">'
+            f'<div class="match-meta"><span>{esc(row.get("match_date"))}</span>'
+            f'<span>{esc(row.get("division"))}</span><span>{esc(row.get("section"))}</span>'
+            f'<span>{esc(row.get("kickoff"))}</span></div>'
+            '<div class="match-score">'
+            f'<span class="match-team home">{esc(row.get("home_team"))}</span>'
+            f'<strong>{esc(row.get("home_score"))}–{esc(row.get("away_score"))}</strong>'
+            f'<span class="match-team away">{esc(row.get("away_team"))}</span>'
+            '</div>'
+            '<div class="scorer-groups">'
+            f'{build_scorer_group(row["home_team"], row["home_scorers"])}'
+            f'{build_scorer_group(row["away_team"], row["away_scorers"])}'
+            '</div>'
+            '</article>'
+        )
+    return "\n".join(cards)
+
+
 def dataset_json(datasets: Dict[str, Dataset]) -> str:
     payload = {}
     for key, ds in datasets.items():
@@ -282,11 +442,41 @@ def dataset_json(datasets: Dict[str, Dataset]) -> str:
 
 def build_section(ds: Dataset) -> str:
     label_scope = {"all": "総合", "div1": "1部", "div2": "2部"}[ds.scope]
-    label_kind = {"player": "個人", "team": "チーム得点", "standings": "チーム順位", "fixtures": "次節カード"}[ds.kind]
+    label_kind = {
+        "player": "個人",
+        "team": "チーム得点",
+        "standings": "チーム順位",
+        "fixtures": "次節カード",
+        "results": "試合別得点者",
+    }[ds.kind]
     section_id = f"sec_{ds.year}_{ds.kind}_{ds.scope}"
 
     goals = sum(safe_int(r.get("goals")) for r in ds.rows) if ds.kind in {"player", "team"} else None
     note_rows = sum(1 for r in ds.rows if (r.get("note") or "").strip())
+
+    if ds.kind == "results":
+        past_count = max(len(ds.rows) - 1, 0)
+        toggle = (
+            f'<button type="button" class="results-toggle" data-results-toggle>'
+            f'過去の試合を見る（{past_count}試合）</button>'
+            if past_count else ""
+        )
+        return f"""
+<section id="{section_id}" class="ranking-section result-section" data-year="{ds.year}" data-kind="{ds.kind}" data-scope="{ds.scope}">
+  <div class="section-head">
+    <h2>{esc(ds.year)} {esc(label_kind)} {esc(label_scope)}</h2>
+    <p>通常は直近1試合を表示します。得点者はチーム別です。</p>
+    <div class="stats">
+      <span>試合数: {len(ds.rows)}</span>
+      <span>出典: {esc(ds.source)}</span>
+    </div>
+  </div>
+  <div class="match-results">
+    {build_result_cards(ds.rows)}
+  </div>
+  <div class="results-actions">{toggle}</div>
+</section>
+"""
 
     if ds.kind == "player":
         header = """
@@ -378,6 +568,7 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
         "2026_team_all", "2026_team_div1", "2026_team_div2",
         "2026_standings_div1", "2026_standings_div2",
         "2026_fixtures_all",
+        "2026_results_all", "2026_results_div1", "2026_results_div2",
         "2025_player_all", "2025_player_div1", "2025_player_div2",
         "2025_team_all", "2025_team_div1", "2025_team_div2",
     ]
@@ -601,6 +792,111 @@ td.top-scorer {{
   cursor: pointer;
 }}
 
+.match-results {{
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}}
+
+.match-result-card {{
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+}}
+
+.match-result-card.result-hidden {{
+  display: none;
+}}
+
+.match-meta {{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}}
+
+.match-meta span {{
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 4px 8px;
+}}
+
+.match-score {{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}}
+
+.match-score strong {{
+  font-size: 20px;
+  white-space: nowrap;
+}}
+
+.match-team {{
+  font-weight: 800;
+}}
+
+.match-team.away {{
+  text-align: right;
+}}
+
+.scorer-groups {{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}}
+
+.scorer-team {{
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px;
+}}
+
+.scorer-team h4 {{
+  margin: 0 0 7px;
+  font-size: 13px;
+}}
+
+.scorer-list {{
+  margin: 0;
+  padding-left: 18px;
+}}
+
+.scorer-list li {{
+  margin: 4px 0;
+  font-size: 13px;
+}}
+
+.scorer-name {{
+  font-weight: 700;
+}}
+
+.scorer-minutes {{
+  color: var(--muted);
+  margin-left: 8px;
+}}
+
+.no-scorers {{
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}}
+
+.results-actions {{
+  padding: 0 16px 16px;
+  text-align: center;
+}}
+
+.results-toggle {{
+  color: var(--accent);
+  border-color: var(--accent);
+}}
+
 .drawer {{
   display: none;
   position: fixed;
@@ -695,6 +991,19 @@ td.top-scorer {{
   td {{
     font-size: 13px;
   }}
+
+  .match-score {{
+    grid-template-columns: 1fr;
+    text-align: center;
+  }}
+
+  .match-team.away {{
+    text-align: center;
+  }}
+
+  .scorer-groups {{
+    grid-template-columns: 1fr;
+  }}
 }}
 </style>
 </head>
@@ -732,6 +1041,7 @@ td.top-scorer {{
           <button type="button" data-value="team">チーム得点</button>
           <button type="button" data-value="standings" data-year-only="2026">チーム順位</button>
           <button type="button" data-value="fixtures" data-year-only="2026">次節カード</button>
+          <button type="button" data-value="results" data-year-only="2026">試合別得点者</button>
         </div>
       </div>
 
@@ -767,7 +1077,8 @@ const state = {{
   year: "2026",
   scope: "all",
   kind: "player",
-  search: ""
+  search: "",
+  resultsExpanded: false
 }};
 
 function setActiveButtons(control, value) {{
@@ -781,7 +1092,7 @@ function currentSectionId() {{
 }}
 
 function normalizeSelection() {{
-  if (state.year === "2025" && (state.kind === "standings" || state.kind === "fixtures")) {{
+  if (state.year === "2025" && (state.kind === "standings" || state.kind === "fixtures" || state.kind === "results")) {{
     state.kind = "player";
   }}
   if (state.kind === "standings" && state.scope === "all") {{
@@ -816,6 +1127,23 @@ function applySearch() {{
   const q = state.search.trim().toLowerCase();
   const active = document.getElementById(currentSectionId());
   if (!active) return;
+
+  if (state.kind === "results") {{
+    const cards = active.querySelectorAll(".match-result-card");
+    cards.forEach((card, index) => {{
+      const matchesSearch = !q || card.textContent.toLowerCase().includes(q);
+      const withinLimit = state.resultsExpanded || index === 0 || Boolean(q);
+      card.classList.toggle("result-hidden", !matchesSearch || !withinLimit);
+    }});
+    const toggle = active.querySelector("[data-results-toggle]");
+    if (toggle) {{
+      toggle.hidden = Boolean(q);
+      toggle.textContent = state.resultsExpanded
+        ? "直近1試合だけ表示"
+        : `過去の試合を見る（${{Math.max(cards.length - 1, 0)}}試合）`;
+    }}
+    return;
+  }}
 
   active.querySelectorAll("tbody tr").forEach(tr => {{
     const text = tr.textContent.toLowerCase();
@@ -893,6 +1221,7 @@ document.querySelectorAll("[data-control] button").forEach(btn => {{
   btn.addEventListener("click", () => {{
     const group = btn.parentElement.dataset.control;
     state[group] = btn.dataset.value;
+    state.resultsExpanded = false;
     showSection();
   }});
 }});
@@ -903,6 +1232,12 @@ document.getElementById("searchBox").addEventListener("input", e => {{
 }});
 
 document.addEventListener("click", e => {{
+  const resultsToggle = e.target.closest("[data-results-toggle]");
+  if (resultsToggle) {{
+    state.resultsExpanded = !state.resultsExpanded;
+    applySearch();
+    return;
+  }}
   const target = e.target.closest(".team-name");
   if (!target) return;
   const team = target.dataset.team || target.textContent.trim();
