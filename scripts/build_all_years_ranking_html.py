@@ -376,21 +376,28 @@ def build_standings_table_rows(rows: Sequence[dict]) -> str:
     return "\n".join(out)
 
 
-def build_fixture_table_rows(rows: Sequence[dict]) -> str:
-    out = []
+def build_fixture_cards(rows: Sequence[dict]) -> str:
+    cards = []
     for r in rows:
-        out.append(
-            "<tr>"
-            f"<td>{esc(r.get('division'))}</td>"
-            f"<td>{esc(r.get('section'))}</td>"
-            f"<td>{esc(r.get('match_date'))}</td>"
-            f"<td>{esc(r.get('kickoff'))}</td>"
-            f"<td class=\"team\">{esc(r.get('home_team'))}</td>"
-            f"<td class=\"team\">{esc(r.get('away_team'))}</td>"
-            f"<td>{esc(r.get('venue'))}</td>"
-            "</tr>"
+        cards.append(
+            '<article class="fixture-card">'
+            '<div class="fixture-top">'
+            f'<span class="fixture-division">{esc(r.get("division"))}</span>'
+            f'<span class="fixture-round">{esc(r.get("section"))}</span>'
+            '</div>'
+            '<div class="fixture-datetime">'
+            f'<span>{esc(r.get("match_date"))}</span>'
+            f'<strong>{esc(r.get("kickoff"))}</strong>'
+            '</div>'
+            '<div class="fixture-matchup">'
+            f'<span class="fixture-team home">{esc(r.get("home_team"))}</span>'
+            '<span class="fixture-vs">VS</span>'
+            f'<span class="fixture-team away">{esc(r.get("away_team"))}</span>'
+            '</div>'
+            f'<p class="fixture-venue"><span>会場</span>{esc(r.get("venue"))}</p>'
+            '</article>'
         )
-    return "\n".join(out)
+    return "\n".join(cards)
 
 
 def build_scorer_group(team: str, scorers: Sequence[dict]) -> str:
@@ -478,6 +485,28 @@ def build_section(ds: Dataset) -> str:
 </section>
 """
 
+    if ds.kind == "fixtures":
+        stats = [
+            f"<span>試合数: {len(ds.rows)}</span>",
+            f"<span>note保持: {note_rows}</span>",
+            f"<span>出典: {esc(ds.source)}</span>",
+        ]
+        return f"""
+<section id="{section_id}" class="ranking-section fixture-section" data-year="{ds.year}" data-kind="{ds.kind}" data-scope="{ds.scope}">
+  {note_comment(f"{ds.year}_{ds.kind}_{ds.scope}", ds.rows)}
+  <div class="section-head">
+    <h2>{esc(ds.year)} {esc(label_kind)}{esc(label_scope)}</h2>
+    <p>CSVで確認済みの次節カードです。</p>
+    <div class="stats">
+      {''.join(stats)}
+    </div>
+  </div>
+  <div class="fixture-grid">
+    {build_fixture_cards(ds.rows)}
+  </div>
+</section>
+"""
+
     if ds.kind == "player":
         header = """
 <thead>
@@ -518,18 +547,6 @@ def build_section(ds: Dataset) -> str:
 """
         body = build_standings_table_rows(ds.rows)
         helper = "勝点、得失点差、総得点の順で集計した順位表です。"
-    else:
-        header = """
-<thead>
-<tr>
-<th>部</th><th>節</th><th>日付</th><th>開始</th>
-<th>ホーム</th><th>アウェイ</th><th>会場</th>
-</tr>
-</thead>
-"""
-        body = build_fixture_table_rows(ds.rows)
-        helper = "CSVで確認済みの次節カードです。"
-
     stats = [f"<span>行数: {len(ds.rows)}</span>"]
     if goals is not None:
         stats.append(f"<span>得点: {goals}</span>")
@@ -586,71 +603,158 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
 <title>2025-2026 関東U-15女子 得点ランキング</title>
 <style>
 :root {{
-  --bg: #f5f7fb;
+  --bg: #f8fbff;
   --card: #ffffff;
-  --text: #172033;
-  --muted: #64748b;
-  --line: #dbe3ef;
-  --strong: #0f172a;
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
-  --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  --text: #26324b;
+  --muted: #70809e;
+  --line: #e3e9f4;
+  --strong: #14213d;
+  --navy: #172554;
+  --accent: #6d28d9;
+  --accent-2: #ec4899;
+  --sky: #38bdf8;
+  --accent-soft: #f3e8ff;
+  --pink-soft: #fdf2f8;
+  --sky-soft: #effaff;
+  --shadow: 0 16px 40px rgba(37, 43, 78, 0.09);
+  --shadow-soft: 0 8px 24px rgba(72, 60, 130, 0.07);
 }}
 
 * {{
   box-sizing: border-box;
 }}
 
+html,
+body {{
+  overflow-x: hidden;
+}}
+
 body {{
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(236, 72, 153, 0.13), transparent 34%),
+    radial-gradient(circle at 100% 8%, rgba(56, 189, 248, 0.16), transparent 32%),
+    linear-gradient(180deg, #ffffff 0%, var(--bg) 42%, #f8f5ff 100%);
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }}
 
 .page {{
-  max-width: 1120px;
+  width: 100%;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 18px;
 }}
 
 .hero {{
-  background: linear-gradient(135deg, #0f172a, #1d4ed8);
-  color: #fff;
-  border-radius: 22px;
-  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: end;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 28px;
+  padding: 28px;
   box-shadow: var(--shadow);
+}}
+
+.hero::before {{
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--accent-2), #a855f7 48%, var(--sky));
+}}
+
+.hero::after {{
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  right: -72px;
+  top: -92px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(236, 72, 153, 0.13), rgba(56, 189, 248, 0.12));
+  pointer-events: none;
+}}
+
+.hero-copy,
+.hero-meta {{
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}}
+
+.hero-kicker {{
+  margin: 0 0 8px !important;
+  color: var(--accent) !important;
+  font-size: 11px !important;
+  font-weight: 900;
+  letter-spacing: 0.14em;
 }}
 
 .hero h1 {{
   margin: 0 0 8px;
-  font-size: 22px;
-  line-height: 1.25;
+  color: var(--navy);
+  font-size: clamp(22px, 4vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}}
+
+.hero-title-break {{
+  white-space: nowrap;
 }}
 
 .hero p {{
   margin: 4px 0;
-  color: #e5eefc;
+  color: var(--muted);
   font-size: 13px;
+}}
+
+.hero-lead {{
+  max-width: 620px;
+  font-weight: 600;
+}}
+
+.hero-meta {{
+  min-width: 190px;
+  padding: 14px 16px;
+  border: 1px solid #e8e5fb;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fdf2f8, #effaff);
+}}
+
+.hero-meta span {{
+  display: block;
+  margin-bottom: 3px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
 }}
 
 .controls {{
   position: sticky;
-  top: 0;
+  top: 6px;
   z-index: 20;
-  margin: 14px 0;
-  background: rgba(245, 247, 251, 0.92);
-  backdrop-filter: blur(10px);
-  padding: 10px 0;
+  margin: 12px 0 16px;
+  padding: 6px 0;
 }}
 
 .control-card {{
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: var(--shadow);
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(224, 229, 241, 0.9);
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
 }}
 
 .control-group {{
@@ -662,7 +766,8 @@ body {{
   font-size: 12px;
   color: var(--muted);
   margin-bottom: 6px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }}
 
 .buttons {{
@@ -675,39 +780,69 @@ button {{
   border: 1px solid var(--line);
   background: #fff;
   color: var(--strong);
-  padding: 8px 11px;
+  padding: 9px 13px;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}}
+
+button:hover {{
+  border-color: #c4b5fd;
+  transform: translateY(-1px);
+}}
+
+button:focus-visible,
+input:focus-visible {{
+  outline: 3px solid rgba(56, 189, 248, 0.3);
+  outline-offset: 2px;
 }}
 
 button.active {{
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 7px 18px rgba(109, 40, 217, 0.22);
 }}
 
 .search-row {{
   display: flex;
   gap: 8px;
+  min-width: 0;
 }}
 
 input[type="search"] {{
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 10px 12px;
-  font-size: 15px;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fbfcff;
+  color: var(--strong);
+  font-size: 16px;
+}}
+
+.search-label {{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }}
 
 .ranking-section {{
   display: none;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 22px;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(225, 231, 243, 0.94);
+  border-radius: 26px;
   box-shadow: var(--shadow);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }}
 
 .ranking-section.active {{
@@ -715,13 +850,17 @@ input[type="search"] {{
 }}
 
 .section-head {{
-  padding: 16px;
+  position: relative;
+  padding: 20px;
   border-bottom: 1px solid var(--line);
+  background: linear-gradient(110deg, rgba(253, 242, 248, 0.8), rgba(239, 250, 255, 0.82));
 }}
 
 .section-head h2 {{
   margin: 0 0 6px;
-  font-size: 19px;
+  color: var(--navy);
+  font-size: 21px;
+  letter-spacing: -0.02em;
 }}
 
 .section-head p {{
@@ -732,21 +871,27 @@ input[type="search"] {{
 
 .stats {{
   display: flex;
+  min-width: 0;
   gap: 6px;
   flex-wrap: wrap;
   margin-top: 10px;
 }}
 
 .stats span {{
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(226, 232, 240, 0.86);
   border-radius: 999px;
-  padding: 5px 8px;
+  padding: 5px 9px;
   font-size: 12px;
-  color: #334155;
+  color: #52617d;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  min-width: 0;
 }}
 
 .table-wrap {{
   overflow-x: auto;
+  scrollbar-color: #c4b5fd transparent;
 }}
 
 table {{
@@ -756,20 +901,31 @@ table {{
 }}
 
 th {{
-  background: #f8fafc;
-  color: #334155;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fafaff;
+  color: #4b5874;
   font-size: 12px;
   text-align: left;
-  padding: 10px 8px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }}
 
 td {{
-  padding: 10px 8px;
-  border-bottom: 1px solid #edf2f7;
+  padding: 12px 10px;
+  border-bottom: 1px solid #eef1f7;
   font-size: 14px;
   vertical-align: top;
+}}
+
+tbody tr:nth-child(even) {{
+  background: #fcfbff;
+}}
+
+tbody tr:hover {{
+  background: var(--sky-soft);
 }}
 
 td.rank,
@@ -787,22 +943,147 @@ td.top-scorer {{
 
 .team-name {{
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: underline dotted;
+  text-decoration-color: #c4b5fd;
+  text-underline-offset: 4px;
   cursor: pointer;
+}}
+
+.fixture-grid {{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+}}
+
+.fixture-card {{
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e4e8f3;
+  border-radius: 22px;
+  padding: 16px;
+  background: linear-gradient(145deg, #ffffff 0%, #fefaff 54%, #f2fbff 100%);
+  box-shadow: var(--shadow-soft);
+}}
+
+.fixture-card::before {{
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent-2), var(--accent), var(--sky));
+}}
+
+.fixture-top,
+.fixture-datetime {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}}
+
+.fixture-top {{
+  margin-bottom: 12px;
+}}
+
+.fixture-division,
+.fixture-round {{
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}}
+
+.fixture-division {{
+  color: #9d174d;
+  background: #fce7f3;
+}}
+
+.fixture-round {{
+  color: #5b21b6;
+  background: #f3e8ff;
+}}
+
+.fixture-datetime {{
+  justify-content: center;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}}
+
+.fixture-datetime strong {{
+  color: var(--navy);
+  font-size: 18px;
+}}
+
+.fixture-matchup {{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+}}
+
+.fixture-team {{
+  color: var(--strong);
+  font-weight: 850;
+  line-height: 1.35;
+}}
+
+.fixture-team.home {{
+  text-align: right;
+}}
+
+.fixture-vs {{
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(145deg, var(--navy), var(--accent));
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}}
+
+.fixture-venue {{
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed #dfe4ef;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}}
+
+.fixture-venue span {{
+  margin-right: 7px;
+  color: var(--accent);
+  font-weight: 800;
 }}
 
 .match-results {{
   display: grid;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 18px;
 }}
 
 .match-result-card {{
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 14px;
-  background: #fff;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e4e8f3;
+  border-radius: 22px;
+  padding: 17px;
+  background: linear-gradient(145deg, #fff, #fdfaff);
+  box-shadow: var(--shadow-soft);
+}}
+
+.match-result-card::before {{
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--sky));
 }}
 
 .match-result-card.result-hidden {{
@@ -819,7 +1100,7 @@ td.top-scorer {{
 }}
 
 .match-meta span {{
-  background: #f1f5f9;
+  background: #f4f2fb;
   border-radius: 999px;
   padding: 4px 8px;
 }}
@@ -833,7 +1114,8 @@ td.top-scorer {{
 }}
 
 .match-score strong {{
-  font-size: 20px;
+  color: var(--navy);
+  font-size: 23px;
   white-space: nowrap;
 }}
 
@@ -852,9 +1134,10 @@ td.top-scorer {{
 }}
 
 .scorer-team {{
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 10px;
+  border: 1px solid #edf0f6;
+  background: rgba(248, 250, 255, 0.9);
+  border-radius: 15px;
+  padding: 12px;
 }}
 
 .scorer-team h4 {{
@@ -893,8 +1176,10 @@ td.top-scorer {{
 }}
 
 .results-toggle {{
-  color: var(--accent);
-  border-color: var(--accent);
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), #4f46e5);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
 }}
 
 .drawer {{
@@ -905,9 +1190,9 @@ td.top-scorer {{
   bottom: 10px;
   max-height: 72vh;
   overflow: auto;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e1e5f0;
+  border-radius: 26px;
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.24);
   z-index: 50;
 }}
@@ -919,7 +1204,7 @@ td.top-scorer {{
 .drawer-head {{
   position: sticky;
   top: 0;
-  background: #fff;
+  background: linear-gradient(110deg, #fdf2f8, #effaff);
   padding: 14px;
   border-bottom: 1px solid var(--line);
 }}
@@ -962,26 +1247,77 @@ td.top-scorer {{
   color: var(--muted);
   font-size: 12px;
   text-align: center;
-  padding: 18px 0 26px;
+  padding: 24px 12px 32px;
+}}
+
+.footer p {{
+  margin: 4px 0;
+}}
+
+.footer-unofficial {{
+  color: var(--navy);
+  font-weight: 800;
 }}
 
 @media (max-width: 640px) {{
   .page {{
-    padding: 10px;
+    padding: 9px;
   }}
 
   .hero {{
-    border-radius: 18px;
-    padding: 16px;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    border-radius: 22px;
+    padding: 22px 18px 18px;
   }}
 
   .hero h1 {{
-    font-size: 19px;
+    font-size: 23px;
+  }}
+
+  .hero-title-break {{
+    display: block;
+    margin-top: 2px;
+  }}
+
+  .hero-meta {{
+    min-width: 0;
+    padding: 11px 13px;
+  }}
+
+  .controls {{
+    top: 3px;
+    margin: 8px 0 12px;
+  }}
+
+  .control-card {{
+    border-radius: 18px;
+    padding: 11px;
+  }}
+
+  .buttons {{
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 1px 1px 4px;
+    scrollbar-width: none;
+  }}
+
+  .buttons::-webkit-scrollbar {{
+    display: none;
   }}
 
   button {{
-    padding: 8px 10px;
+    flex: 0 0 auto;
+    padding: 8px 11px;
     font-size: 12px;
+  }}
+
+  .section-head {{
+    padding: 17px 15px;
+  }}
+
+  .section-head h2 {{
+    font-size: 19px;
   }}
 
   table {{
@@ -990,6 +1326,30 @@ td.top-scorer {{
 
   td {{
     font-size: 13px;
+  }}
+
+  .fixture-grid {{
+    grid-template-columns: 1fr;
+    gap: 11px;
+    padding: 13px;
+  }}
+
+  .fixture-card {{
+    border-radius: 18px;
+    padding: 14px;
+  }}
+
+  .fixture-matchup {{
+    gap: 8px;
+  }}
+
+  .match-results {{
+    padding: 13px;
+  }}
+
+  .match-result-card {{
+    border-radius: 18px;
+    padding: 15px;
   }}
 
   .match-score {{
@@ -1010,9 +1370,15 @@ td.top-scorer {{
 <body>
 <div class="page">
   <header class="hero">
-    <h1>2025-2026 関東U-15女子 得点ランキング</h1>
-    <p>年度・区分・表示種別を切り替えて閲覧できます。</p>
-    <p>更新日時: {esc(now_local())}</p>
+    <div class="hero-copy">
+      <p class="hero-kicker">KANTO U-15 WOMEN'S FOOTBALL</p>
+      <h1>2025-2026 関東U-15女子<span class="hero-title-break"> 得点ランキング</span></h1>
+      <p class="hero-lead">選手の得点記録、チーム順位、次の試合をひとつの画面で見やすく。</p>
+    </div>
+    <div class="hero-meta">
+      <span>DATA UPDATE</span>
+      <p>{esc(now_local())}</p>
+    </div>
   </header>
 
   <div class="controls">
@@ -1046,6 +1412,7 @@ td.top-scorer {{
       </div>
 
       <div class="search-row">
+        <label class="search-label" for="searchBox">選手名・チーム名で検索</label>
         <input id="searchBox" type="search" placeholder="選手名・チーム名で検索">
       </div>
     </div>
@@ -1065,7 +1432,9 @@ td.top-scorer {{
   </aside>
 
   <footer class="footer">
-    出典CSVの note は画面非表示、HTMLコメント内に保持。自動補完なし。
+    <p class="footer-unofficial">このサイトは公開情報をもとにした非公式集計サイトです。</p>
+    <p>大会主催者・各リーグ・各チームとは関係ありません。</p>
+    <p>出典CSVの note は画面非表示、HTMLコメント内に保持。自動補完なし。</p>
   </footer>
 </div>
 
