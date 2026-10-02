@@ -370,9 +370,10 @@ def parse_section_content(match: MatchRow, team: str, content: str) -> List[Goal
     return events
 
 
-def parse_goal_events_for_match(match: MatchRow) -> List[GoalEvent]:
+def parse_goal_events_for_match(match: MatchRow, html_text: str | None = None) -> List[GoalEvent]:
     try:
-        html_text = fetch_text(match.source_url)
+        if html_text is None:
+            html_text = fetch_text(match.source_url)
         compact = html_to_compact(html_text)
     except (HTTPError, URLError, TimeoutError) as e:
         raise HoldError(f"fetch failed: {match.match_id}: {e}") from e

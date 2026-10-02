@@ -1,5 +1,6 @@
 """Regression tests use temporary copies; no network and no writes to real data."""
 import contextlib
+from dataclasses import replace
 import csv
 import io
 import json
@@ -135,6 +136,7 @@ class WorkflowSafety(unittest.TestCase):
         output = self.data / "matches_2026.csv"
         before = output.read_bytes()
         rows = [matches.MatchRow(**row) for row in read_csv(output)]
+        rows[0] = replace(rows[0], status="review")
         with patch.object(matches, "build_rows", return_value=rows):
             with contextlib.redirect_stderr(io.StringIO()):
                 code = matches.main(["matches", str(self.data / "match_sources_2026.csv"), str(output)])

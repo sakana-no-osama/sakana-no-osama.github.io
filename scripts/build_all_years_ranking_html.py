@@ -400,7 +400,7 @@ def build_fixture_cards(rows: Sequence[dict]) -> str:
             '<span class="fixture-vs">VS</span>'
             f'<span class="fixture-team away">{esc(r.get("away_team"))}</span>'
             '</div>'
-            f'<p class="fixture-venue"><span>会場</span>{esc(r.get("venue"))}</p>'
+            f'<p class="fixture-venue"><span>会場</span>{esc(r.get("venue")) or "公式情報に未掲載"}</p>'
             f'<a class="source-link" href="{esc(r.get("source_url"))}" target="_blank" rel="noopener noreferrer">公式の試合情報 ↗</a>'
             '</article>'
         )

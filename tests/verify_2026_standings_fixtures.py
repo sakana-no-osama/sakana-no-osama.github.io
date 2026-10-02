@@ -113,8 +113,8 @@ def verify_fixtures(masters: dict[str,set[str]]) -> str:
             if not match_id or match_id in all_ids: raise ValueError(f"blank or duplicate fixture match_id: {match_id!r}")
             all_ids.add(match_id)
             if home not in masters[division] or away not in masters[division] or home==away: raise ValueError(f"{division}: invalid fixture teams")
-            if not venue: raise ValueError(f"{match_id}: blank venue")
-            if (row.get("status") or "").strip()!="scheduled" or (row.get("note") or "").strip(): raise ValueError(f"{match_id}: invalid status or note")
+            expected_note = "" if venue else "venue_not_published"
+            if (row.get("status") or "").strip()!="scheduled" or (row.get("note") or "").strip()!=expected_note: raise ValueError(f"{match_id}: invalid status or venue note")
             try:
                 datetime.strptime((row.get("match_date") or "").strip(),"%Y-%m-%d")
                 datetime.strptime((row.get("kickoff") or "").strip(),"%H:%M")
@@ -144,4 +144,12 @@ def main() -> int:
         print(f"VERDICT=FAIL\nFAIL_REASON={exc}",file=sys.stderr); return 1
 
 if __name__=="__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-dir", type=Path, default=DATA)
+    args = parser.parse_args()
+    DATA = args.data_dir
+    MATCHES, MASTER, ALIASES = (DATA / name for name in ("matches_2026.csv", "team_master_2026.csv", "team_name_alias_2026.csv"))
+    OUTPUTS = {"1部": DATA / "league_standings_2026_div1.csv", "2部": DATA / "league_standings_2026_div2.csv"}
+    FIXTURES = DATA / "next_fixtures_2026.csv"
     raise SystemExit(main())

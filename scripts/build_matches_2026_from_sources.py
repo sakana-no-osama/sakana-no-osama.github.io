@@ -396,8 +396,9 @@ def parse_scheduled_from_direct_body(after_sec: str) -> Tuple[str, str, str, str
     return home_team, away_team, "", "", venue, ""
 
 
-def parse_match_page(source_url: str) -> dict:
-    html_text = fetch_text(source_url)
+def parse_match_page(source_url: str, html_text: str | None = None) -> dict:
+    if html_text is None:
+        html_text = fetch_text(source_url)
     compact = html_to_compact(html_text)
     block = extract_main_block(compact)
 

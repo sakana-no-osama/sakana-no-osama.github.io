@@ -78,14 +78,33 @@ def parse_page(page: str, division: str, source_page: str, as_of: date, teams: s
         re.S | re.I,
     )
     tokens = list(token_pattern.finditer(page))
+    # Select the earliest remaining round by date before requiring its venue data.
+    # Later rounds may have unpublished venues and must not block the next round.
+    current = ""
+    candidates = []
+    for token in tokens:
+        if token.group("section"):
+            current = text_content(token.group("section"))
+            continue
+        opening = token.group("game") or ""
+        if "game-status-0" not in opening:
+            continue
+        stamp = re.search(r'data-fl-game-datetime="([^"]+)"', opening)
+        if not stamp or not current:
+            raise HoldError(f"{division}: scheduled game missing date or section")
+        when = datetime.fromisoformat(stamp.group(1))
+        if when.year == 2026 and when.date() >= as_of:
+            candidates.append((when, current))
+    if not candidates:
+        raise HoldError(f"{division}: no future scheduled fixtures from {as_of}")
+    next_section = min(candidates)[1]
     current_section = ""
     fixtures: list[Fixture] = []
     for index, token in enumerate(tokens):
         if token.group("section"):
-            next_section = text_content(token.group("section"))
-            if fixtures and next_section != fixtures[0].section:
-                break
-            current_section = next_section
+            current_section = text_content(token.group("section"))
+            continue
+        if current_section != next_section:
             continue
         opening = token.group("game") or ""
         end = tokens[index + 1].start() if index + 1 < len(tokens) else len(page)
@@ -121,7 +140,8 @@ def parse_page(page: str, division: str, source_page: str, as_of: date, teams: s
 
         home = capture(segment, r'match-slim__team-home-title[^>]*>(.*?)</div>', "home_team")
         away = capture(segment, r'match-slim__team-away-title[^>]*>(.*?)</div>', "away_team")
-        venue = capture(segment, r'match-slim__stadium[^>]*>(.*?)</div>', "venue")
+        venue_match = re.search(r'match-slim__stadium[^>]*>(.*?)</div>', segment, re.S | re.I)
+        venue = text_content(venue_match.group(1)) if venue_match else ""
         link_match = re.search(
             r'<a\s+class="anwp-link-cover[^"]*"\s+href="([^"]+)"',
             segment,
@@ -148,6 +168,7 @@ def parse_page(page: str, division: str, source_page: str, as_of: date, teams: s
             away_team=away,
             venue=venue,
             source_url=source_url,
+            note="" if venue else "venue_not_published",
         ))
 
     if not fixtures:
