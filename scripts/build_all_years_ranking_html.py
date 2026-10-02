@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import html
 import json
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from workflow_io import ROOT, DATA, atomic_write_text
+from ranking_checks import check_matches, check_rankings
 from typing import Dict, List, Sequence
 
 
-OUT_HTML = Path("U15RANK_ALL_YEARS.html")
+OUT_HTML = ROOT / ".preview" / "index.html"
 MATCH_RESULTS_CSV = "matches_2026_played.csv"
 GOAL_EVENTS_CSV = "goal_events_2026.csv"
 TEAM_ALIASES_CSV = "team_name_alias_2026.csv"
@@ -52,7 +55,7 @@ class Dataset:
 
 
 def now_local() -> str:
-    return datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+    return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
 def backup_existing(path: Path) -> None:
@@ -147,8 +150,8 @@ def validate_fixture_rows(rows: Sequence[dict], source: str) -> None:
                 raise HoldError(f"{source}: blank {col} at csv line {i}")
 
 
-def load_team_aliases() -> Dict[tuple[str, str], str]:
-    rows = read_csv_required(Path(TEAM_ALIASES_CSV))
+def load_team_aliases(data_dir: Path = DATA) -> Dict[tuple[str, str], str]:
+    rows = read_csv_required(data_dir / TEAM_ALIASES_CSV)
     required = ["raw_team", "canonical_team", "division"]
     for col in required:
         if col not in rows[0]:
@@ -164,10 +167,11 @@ def load_team_aliases() -> Dict[tuple[str, str], str]:
     return aliases
 
 
-def load_match_result_datasets() -> Dict[str, Dataset]:
-    matches = read_csv_required(Path(MATCH_RESULTS_CSV))
-    events = read_csv_required(Path(GOAL_EVENTS_CSV))
-    aliases = load_team_aliases()
+def load_match_result_datasets(data_dir: Path = DATA) -> Dict[str, Dataset]:
+    check_matches(data_dir)
+    matches = read_csv_required(data_dir / MATCH_RESULTS_CSV)
+    events = read_csv_required(data_dir / GOAL_EVENTS_CSV)
+    aliases = load_team_aliases(data_dir)
     match_required = [
         "match_id", "division", "match_date", "kickoff", "section",
         "home_team", "away_team", "home_score", "away_score", "status",
@@ -234,6 +238,7 @@ def load_match_result_datasets() -> Dict[str, Dataset]:
             "match_date": (match.get("match_date") or "").strip(),
             "kickoff": (match.get("kickoff") or "").strip(),
             "section": (match.get("section") or "").strip(),
+            "source_url": match.get("source_url", ""),
             "home_team": home,
             "away_team": away,
             "home_score": home_score_text,
@@ -263,12 +268,13 @@ def load_match_result_datasets() -> Dict[str, Dataset]:
     }
 
 
-def load_datasets() -> Dict[str, Dataset]:
+def load_datasets(data_dir: Path = DATA) -> Dict[str, Dataset]:
+    check_rankings(data_dir)
     datasets: Dict[str, Dataset] = {}
 
     for year, files in INPUTS.items():
         for key, filename in files.items():
-            path = Path(filename)
+            path = data_dir / filename
             rows = read_csv_required(path)
 
             if key.startswith("player_"):
@@ -303,7 +309,7 @@ def load_datasets() -> Dict[str, Dataset]:
                 source=filename,
             )
 
-    datasets.update(load_match_result_datasets())
+    datasets.update(load_match_result_datasets(data_dir))
     return datasets
 
 
@@ -332,7 +338,7 @@ def build_player_table_rows(rows: Sequence[dict]) -> str:
             "<tr>"
             f"<td class=\"rank\">{esc(r.get('rank'))}</td>"
             f"<td class=\"player\">{esc(r.get('player'))}</td>"
-            f"<td class=\"team team-name\" data-team=\"{esc(r.get('team'))}\">{esc(r.get('team'))}</td>"
+            f"<td class=\"team team-name\" role=\"button\" tabindex=\"0\" aria-haspopup=\"dialog\" data-team=\"{esc(r.get('team'))}\">{esc(r.get('team'))}</td>"
             f"<td class=\"num\">{esc(r.get('goals'))}</td>"
             f"<td class=\"num\">{esc(r.get('match_count'))}</td>"
             "</tr>"
@@ -346,7 +352,7 @@ def build_team_table_rows(rows: Sequence[dict]) -> str:
         out.append(
             "<tr>"
             f"<td class=\"rank\">{esc(r.get('rank'))}</td>"
-            f"<td class=\"team team-name\" data-team=\"{esc(r.get('team'))}\">{esc(r.get('team'))}</td>"
+            f"<td class=\"team team-name\" role=\"button\" tabindex=\"0\" aria-haspopup=\"dialog\" data-team=\"{esc(r.get('team'))}\">{esc(r.get('team'))}</td>"
             f"<td class=\"num\">{esc(r.get('goals'))}</td>"
             f"<td class=\"num\">{esc(r.get('scorer_count'))}</td>"
             f"<td class=\"num\">{esc(r.get('match_count'))}</td>"
@@ -380,7 +386,7 @@ def build_fixture_cards(rows: Sequence[dict]) -> str:
     cards = []
     for r in rows:
         cards.append(
-            '<article class="fixture-card">'
+            f'<article class="fixture-card" data-date="{esc(r.get("match_date"))}">'
             '<div class="fixture-top">'
             f'<span class="fixture-division">{esc(r.get("division"))}</span>'
             f'<span class="fixture-round">{esc(r.get("section"))}</span>'
@@ -395,6 +401,7 @@ def build_fixture_cards(rows: Sequence[dict]) -> str:
             f'<span class="fixture-team away">{esc(r.get("away_team"))}</span>'
             '</div>'
             f'<p class="fixture-venue"><span>会場</span>{esc(r.get("venue"))}</p>'
+            f'<a class="source-link" href="{esc(r.get("source_url"))}" target="_blank" rel="noopener noreferrer">公式の試合情報 ↗</a>'
             '</article>'
         )
     return "\n".join(cards)
@@ -441,10 +448,11 @@ def build_result_cards(rows: Sequence[dict]) -> str:
 
 
 def dataset_json(datasets: Dict[str, Dataset]) -> str:
-    payload = {}
-    for key, ds in datasets.items():
-        payload[key] = ds.rows
-    return json.dumps(payload, ensure_ascii=False)
+    fields = ("rank", "player", "team", "goals", "match_count")
+    payload = {key: [{field: row[field] for field in fields} for row in ds.rows]
+               for key, ds in datasets.items() if ds.kind == "player"}
+    # Script raw-text elements do not decode HTML entities. Escape '<' as JSON.
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
 
 
 def build_section(ds: Dataset) -> str:
@@ -475,7 +483,7 @@ def build_section(ds: Dataset) -> str:
     <p>通常は直近1試合を表示します。得点者はチーム別です。</p>
     <div class="stats">
       <span>試合数: {len(ds.rows)}</span>
-      <span>出典: {esc(ds.source)}</span>
+
     </div>
   </div>
   <div class="match-results">
@@ -486,21 +494,18 @@ def build_section(ds: Dataset) -> str:
 """
 
     if ds.kind == "fixtures":
-        stats = [
-            f"<span>試合数: {len(ds.rows)}</span>",
-            f"<span>note保持: {note_rows}</span>",
-            f"<span>出典: {esc(ds.source)}</span>",
-        ]
+        stats = [f"<span>試合数: {len(ds.rows)}</span>"]
         return f"""
 <section id="{section_id}" class="ranking-section fixture-section" data-year="{ds.year}" data-kind="{ds.kind}" data-scope="{ds.scope}">
   {note_comment(f"{ds.year}_{ds.kind}_{ds.scope}", ds.rows)}
   <div class="section-head">
     <h2>{esc(ds.year)} {esc(label_kind)}{esc(label_scope)}</h2>
-    <p>CSVで確認済みの次節カードです。</p>
+    <p>保存済みの予定です。日程の変更は各試合の公式情報をご確認ください。</p>
     <div class="stats">
       {''.join(stats)}
     </div>
   </div>
+  <p class="freshness-notice" data-fixture-warning hidden></p>
   <div class="fixture-grid">
     {build_fixture_cards(ds.rows)}
   </div>
@@ -515,7 +520,7 @@ def build_section(ds: Dataset) -> str:
 <th>選手</th>
 <th>チーム</th>
 <th>得点</th>
-<th>試合数</th>
+<th title="1点以上得点した試合の数">得点試合</th>
 </tr>
 </thead>
 """
@@ -529,7 +534,7 @@ def build_section(ds: Dataset) -> str:
 <th>チーム</th>
 <th>得点</th>
 <th>得点者数</th>
-<th>試合数</th>
+<th title="1点以上得点した試合の数">得点試合</th>
 <th>最多得点者</th>
 </tr>
 </thead>
@@ -547,13 +552,9 @@ def build_section(ds: Dataset) -> str:
 """
         body = build_standings_table_rows(ds.rows)
         helper = "勝点、得失点差、総得点の順で集計した順位表です。"
-    stats = [f"<span>行数: {len(ds.rows)}</span>"]
+    stats = [f"<span>{'選手数' if ds.kind == 'player' else 'チーム数'}: {len(ds.rows)}</span>"]
     if goals is not None:
         stats.append(f"<span>得点: {goals}</span>")
-    stats.extend([
-        f"<span>note保持: {note_rows}</span>",
-        f"<span>出典: {esc(ds.source)}</span>",
-    ])
 
     return f"""
 <section id="{section_id}" class="ranking-section" data-year="{ds.year}" data-kind="{ds.kind}" data-scope="{ds.scope}">
@@ -594,6 +595,9 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
         sections.append(build_section(datasets[key]))
 
     data_json = dataset_json(datasets)
+    latest_record = max(row["match_date"] for row in datasets["2026_results_all"].rows)
+    style_css = (ROOT / "web" / "ranking.css").read_text(encoding="utf-8")
+    script_js = (ROOT / "web" / "ranking.js").read_text(encoding="utf-8")
 
     return f"""<!doctype html>
 <html lang="ja">
@@ -602,769 +606,7 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>2025-2026 関東U-15女子 得点ランキング</title>
 <style>
-:root {{
-  --bg: #f8fbff;
-  --card: #ffffff;
-  --text: #26324b;
-  --muted: #70809e;
-  --line: #e3e9f4;
-  --strong: #14213d;
-  --navy: #172554;
-  --accent: #6d28d9;
-  --accent-2: #ec4899;
-  --sky: #38bdf8;
-  --accent-soft: #f3e8ff;
-  --pink-soft: #fdf2f8;
-  --sky-soft: #effaff;
-  --shadow: 0 16px 40px rgba(37, 43, 78, 0.09);
-  --shadow-soft: 0 8px 24px rgba(72, 60, 130, 0.07);
-}}
-
-* {{
-  box-sizing: border-box;
-}}
-
-html,
-body {{
-  overflow-x: hidden;
-}}
-
-body {{
-  margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 0% 0%, rgba(236, 72, 153, 0.13), transparent 34%),
-    radial-gradient(circle at 100% 8%, rgba(56, 189, 248, 0.16), transparent 32%),
-    linear-gradient(180deg, #ffffff 0%, var(--bg) 42%, #f8f5ff 100%);
-  color: var(--text);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}}
-
-.page {{
-  width: 100%;
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 18px;
-}}
-
-.hero {{
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 20px;
-  align-items: end;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: var(--shadow);
-}}
-
-.hero::before {{
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 6px;
-  background: linear-gradient(90deg, var(--accent-2), #a855f7 48%, var(--sky));
-}}
-
-.hero::after {{
-  content: "";
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  right: -72px;
-  top: -92px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, rgba(236, 72, 153, 0.13), rgba(56, 189, 248, 0.12));
-  pointer-events: none;
-}}
-
-.hero-copy,
-.hero-meta {{
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}}
-
-.hero-kicker {{
-  margin: 0 0 8px !important;
-  color: var(--accent) !important;
-  font-size: 11px !important;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-}}
-
-.hero h1 {{
-  margin: 0 0 8px;
-  color: var(--navy);
-  font-size: clamp(22px, 4vw, 32px);
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-}}
-
-.hero-title-break {{
-  white-space: nowrap;
-}}
-
-.hero p {{
-  margin: 4px 0;
-  color: var(--muted);
-  font-size: 13px;
-}}
-
-.hero-lead {{
-  max-width: 620px;
-  font-weight: 600;
-}}
-
-.hero-meta {{
-  min-width: 190px;
-  padding: 14px 16px;
-  border: 1px solid #e8e5fb;
-  border-radius: 18px;
-  background: linear-gradient(145deg, #fdf2f8, #effaff);
-}}
-
-.hero-meta span {{
-  display: block;
-  margin-bottom: 3px;
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-}}
-
-.controls {{
-  position: sticky;
-  top: 6px;
-  z-index: 20;
-  margin: 12px 0 16px;
-  padding: 6px 0;
-}}
-
-.control-card {{
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(224, 229, 241, 0.9);
-  border-radius: 22px;
-  padding: 14px;
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(14px);
-}}
-
-.control-group {{
-  margin-bottom: 10px;
-}}
-
-.control-label {{
-  display: block;
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}}
-
-.buttons {{
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}}
-
-button {{
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--strong);
-  padding: 9px 13px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 13px;
-  cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-}}
-
-button:hover {{
-  border-color: #c4b5fd;
-  transform: translateY(-1px);
-}}
-
-button:focus-visible,
-input:focus-visible {{
-  outline: 3px solid rgba(56, 189, 248, 0.3);
-  outline-offset: 2px;
-}}
-
-button.active {{
-  background: linear-gradient(135deg, var(--accent-2), var(--accent));
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 7px 18px rgba(109, 40, 217, 0.22);
-}}
-
-.search-row {{
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-}}
-
-input[type="search"] {{
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px 14px;
-  background: #fbfcff;
-  color: var(--strong);
-  font-size: 16px;
-}}
-
-.search-label {{
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}}
-
-.ranking-section {{
-  display: none;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(225, 231, 243, 0.94);
-  border-radius: 26px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  margin-bottom: 20px;
-}}
-
-.ranking-section.active {{
-  display: block;
-}}
-
-.section-head {{
-  position: relative;
-  padding: 20px;
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(110deg, rgba(253, 242, 248, 0.8), rgba(239, 250, 255, 0.82));
-}}
-
-.section-head h2 {{
-  margin: 0 0 6px;
-  color: var(--navy);
-  font-size: 21px;
-  letter-spacing: -0.02em;
-}}
-
-.section-head p {{
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}}
-
-.stats {{
-  display: flex;
-  min-width: 0;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}}
-
-.stats span {{
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(226, 232, 240, 0.86);
-  border-radius: 999px;
-  padding: 5px 9px;
-  font-size: 12px;
-  color: #52617d;
-  overflow-wrap: anywhere;
-  max-width: 100%;
-  min-width: 0;
-}}
-
-.table-wrap {{
-  overflow-x: auto;
-  scrollbar-color: #c4b5fd transparent;
-}}
-
-table {{
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 620px;
-}}
-
-th {{
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #fafaff;
-  color: #4b5874;
-  font-size: 12px;
-  text-align: left;
-  padding: 12px 10px;
-  border-bottom: 1px solid var(--line);
-  white-space: nowrap;
-}}
-
-td {{
-  padding: 12px 10px;
-  border-bottom: 1px solid #eef1f7;
-  font-size: 14px;
-  vertical-align: top;
-}}
-
-tbody tr:nth-child(even) {{
-  background: #fcfbff;
-}}
-
-tbody tr:hover {{
-  background: var(--sky-soft);
-}}
-
-td.rank,
-td.num {{
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}}
-
-td.player,
-td.team,
-td.top-scorer {{
-  font-weight: 700;
-}}
-
-.team-name {{
-  color: var(--accent);
-  text-decoration: underline dotted;
-  text-decoration-color: #c4b5fd;
-  text-underline-offset: 4px;
-  cursor: pointer;
-}}
-
-.fixture-grid {{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 18px;
-}}
-
-.fixture-card {{
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #e4e8f3;
-  border-radius: 22px;
-  padding: 16px;
-  background: linear-gradient(145deg, #ffffff 0%, #fefaff 54%, #f2fbff 100%);
-  box-shadow: var(--shadow-soft);
-}}
-
-.fixture-card::before {{
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--accent-2), var(--accent), var(--sky));
-}}
-
-.fixture-top,
-.fixture-datetime {{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}}
-
-.fixture-top {{
-  margin-bottom: 12px;
-}}
-
-.fixture-division,
-.fixture-round {{
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 800;
-}}
-
-.fixture-division {{
-  color: #9d174d;
-  background: #fce7f3;
-}}
-
-.fixture-round {{
-  color: #5b21b6;
-  background: #f3e8ff;
-}}
-
-.fixture-datetime {{
-  justify-content: center;
-  margin-bottom: 14px;
-  color: var(--muted);
-  font-size: 13px;
-}}
-
-.fixture-datetime strong {{
-  color: var(--navy);
-  font-size: 18px;
-}}
-
-.fixture-matchup {{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-height: 64px;
-}}
-
-.fixture-team {{
-  color: var(--strong);
-  font-weight: 850;
-  line-height: 1.35;
-}}
-
-.fixture-team.home {{
-  text-align: right;
-}}
-
-.fixture-vs {{
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  color: #fff;
-  background: linear-gradient(145deg, var(--navy), var(--accent));
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}}
-
-.fixture-venue {{
-  margin: 14px 0 0;
-  padding-top: 10px;
-  border-top: 1px dashed #dfe4ef;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-}}
-
-.fixture-venue span {{
-  margin-right: 7px;
-  color: var(--accent);
-  font-weight: 800;
-}}
-
-.match-results {{
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-}}
-
-.match-result-card {{
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #e4e8f3;
-  border-radius: 22px;
-  padding: 17px;
-  background: linear-gradient(145deg, #fff, #fdfaff);
-  box-shadow: var(--shadow-soft);
-}}
-
-.match-result-card::before {{
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--sky));
-}}
-
-.match-result-card.result-hidden {{
-  display: none;
-}}
-
-.match-meta {{
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 10px;
-}}
-
-.match-meta span {{
-  background: #f4f2fb;
-  border-radius: 999px;
-  padding: 4px 8px;
-}}
-
-.match-score {{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 14px;
-}}
-
-.match-score strong {{
-  color: var(--navy);
-  font-size: 23px;
-  white-space: nowrap;
-}}
-
-.match-team {{
-  font-weight: 800;
-}}
-
-.match-team.away {{
-  text-align: right;
-}}
-
-.scorer-groups {{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}}
-
-.scorer-team {{
-  border: 1px solid #edf0f6;
-  background: rgba(248, 250, 255, 0.9);
-  border-radius: 15px;
-  padding: 12px;
-}}
-
-.scorer-team h4 {{
-  margin: 0 0 7px;
-  font-size: 13px;
-}}
-
-.scorer-list {{
-  margin: 0;
-  padding-left: 18px;
-}}
-
-.scorer-list li {{
-  margin: 4px 0;
-  font-size: 13px;
-}}
-
-.scorer-name {{
-  font-weight: 700;
-}}
-
-.scorer-minutes {{
-  color: var(--muted);
-  margin-left: 8px;
-}}
-
-.no-scorers {{
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}}
-
-.results-actions {{
-  padding: 0 16px 16px;
-  text-align: center;
-}}
-
-.results-toggle {{
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--accent), #4f46e5);
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
-}}
-
-.drawer {{
-  display: none;
-  position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  max-height: 72vh;
-  overflow: auto;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid #e1e5f0;
-  border-radius: 26px;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.24);
-  z-index: 50;
-}}
-
-.drawer.active {{
-  display: block;
-}}
-
-.drawer-head {{
-  position: sticky;
-  top: 0;
-  background: linear-gradient(110deg, #fdf2f8, #effaff);
-  padding: 14px;
-  border-bottom: 1px solid var(--line);
-}}
-
-.drawer-head h3 {{
-  margin: 0 0 4px;
-  font-size: 17px;
-}}
-
-.drawer-head p {{
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}}
-
-.drawer-close {{
-  position: absolute;
-  right: 12px;
-  top: 12px;
-}}
-
-.drawer-body {{
-  padding: 0 14px 14px;
-}}
-
-.drawer table {{
-  min-width: 0;
-}}
-
-.drawer th,
-.drawer td {{
-  font-size: 13px;
-}}
-
-.hidden-row {{
-  display: none;
-}}
-
-.footer {{
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-  padding: 24px 12px 32px;
-}}
-
-.footer p {{
-  margin: 4px 0;
-}}
-
-.footer-unofficial {{
-  color: var(--navy);
-  font-weight: 800;
-}}
-
-@media (max-width: 640px) {{
-  .page {{
-    padding: 9px;
-  }}
-
-  .hero {{
-    grid-template-columns: 1fr;
-    gap: 14px;
-    border-radius: 22px;
-    padding: 22px 18px 18px;
-  }}
-
-  .hero h1 {{
-    font-size: 23px;
-  }}
-
-  .hero-title-break {{
-    display: block;
-    margin-top: 2px;
-  }}
-
-  .hero-meta {{
-    min-width: 0;
-    padding: 11px 13px;
-  }}
-
-  .controls {{
-    top: 3px;
-    margin: 8px 0 12px;
-  }}
-
-  .control-card {{
-    border-radius: 18px;
-    padding: 11px;
-  }}
-
-  .buttons {{
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 1px 1px 4px;
-    scrollbar-width: none;
-  }}
-
-  .buttons::-webkit-scrollbar {{
-    display: none;
-  }}
-
-  button {{
-    flex: 0 0 auto;
-    padding: 8px 11px;
-    font-size: 12px;
-  }}
-
-  .section-head {{
-    padding: 17px 15px;
-  }}
-
-  .section-head h2 {{
-    font-size: 19px;
-  }}
-
-  table {{
-    min-width: 560px;
-  }}
-
-  td {{
-    font-size: 13px;
-  }}
-
-  .fixture-grid {{
-    grid-template-columns: 1fr;
-    gap: 11px;
-    padding: 13px;
-  }}
-
-  .fixture-card {{
-    border-radius: 18px;
-    padding: 14px;
-  }}
-
-  .fixture-matchup {{
-    gap: 8px;
-  }}
-
-  .match-results {{
-    padding: 13px;
-  }}
-
-  .match-result-card {{
-    border-radius: 18px;
-    padding: 15px;
-  }}
-
-  .match-score {{
-    grid-template-columns: 1fr;
-    text-align: center;
-  }}
-
-  .match-team.away {{
-    text-align: center;
-  }}
-
-  .scorer-groups {{
-    grid-template-columns: 1fr;
-  }}
-}}
+{style_css}
 </style>
 </head>
 <body>
@@ -1376,8 +618,9 @@ td.top-scorer {{
       <p class="hero-lead">選手の得点記録、チーム順位、次の試合をひとつの画面で見やすく。</p>
     </div>
     <div class="hero-meta">
-      <span>DATA UPDATE</span>
-      <p>{esc(now_local())}</p>
+      <span>2026年 収録試合の最終日</span>
+      <p>{esc(latest_record)}</p>
+      <small>ページ生成: {esc(now_local())}</small>
     </div>
   </header>
 
@@ -1413,211 +656,38 @@ td.top-scorer {{
 
       <div class="search-row">
         <label class="search-label" for="searchBox">選手名・チーム名で検索</label>
-        <input id="searchBox" type="search" placeholder="選手名・チーム名で検索">
+        <div class="search-input-row"><input id="searchBox" type="search" placeholder="選手名・チーム名で検索" aria-describedby="searchStatus">
+        <button id="searchClear" type="button">クリア</button></div>
+        <p id="searchStatus" role="status" aria-live="polite"></p>
       </div>
     </div>
   </div>
 
   <main>
+    <p id="emptyState" class="empty-state" hidden>該当する記録がありません。検索する名前や区分を変えてみてください。</p>
     {''.join(sections)}
   </main>
 
-  <aside id="teamDrawer" class="drawer" aria-live="polite">
+  <dialog id="teamDrawer" class="drawer" aria-labelledby="drawerTitle">
     <div class="drawer-head">
       <button id="drawerClose" class="drawer-close" type="button">閉じる</button>
       <h3 id="drawerTitle">チーム内ランキング</h3>
       <p id="drawerSub">チーム名をタップすると表示します。</p>
     </div>
     <div id="drawerBody" class="drawer-body"></div>
-  </aside>
+  </dialog>
 
   <footer class="footer">
     <p class="footer-unofficial">このサイトは公開情報をもとにした非公式集計サイトです。</p>
     <p>大会主催者・各リーグ・各チームとは関係ありません。</p>
-    <p>出典CSVの note は画面非表示、HTMLコメント内に保持。自動補完なし。</p>
+    <p>得点を確認できた記録のみ集計しています。2025年の一部試合には未確認の1点があり、個人得点には含めていません。</p>
+    <p>「得点試合」は1点以上得点した試合数です。</p>
   </footer>
 </div>
 
-<script id="rankingData" type="application/json">{html.escape(data_json, quote=False)}</script>
+<script id="rankingData" type="application/json">{data_json}</script>
 <script>
-const DATA = JSON.parse(document.getElementById("rankingData").textContent);
-
-const state = {{
-  year: "2026",
-  scope: "all",
-  kind: "player",
-  search: "",
-  resultsExpanded: false
-}};
-
-function setActiveButtons(control, value) {{
-  document.querySelectorAll(`[data-control="${{control}}"] button`).forEach(btn => {{
-    btn.classList.toggle("active", btn.dataset.value === value);
-  }});
-}}
-
-function currentSectionId() {{
-  return `sec_${{state.year}}_${{state.kind}}_${{state.scope}}`;
-}}
-
-function normalizeSelection() {{
-  if (state.year === "2025" && (state.kind === "standings" || state.kind === "fixtures" || state.kind === "results")) {{
-    state.kind = "player";
-  }}
-  if (state.kind === "standings" && state.scope === "all") {{
-    state.scope = "div1";
-  }}
-  if (state.kind === "fixtures") {{
-    state.scope = "all";
-  }}
-
-  document.querySelectorAll('[data-year-only="2026"]').forEach(btn => {{
-    btn.hidden = state.year !== "2026";
-  }});
-  document.querySelectorAll('[data-control="scope"] button').forEach(btn => {{
-    btn.hidden =
-      (state.kind === "standings" && btn.dataset.value === "all") ||
-      (state.kind === "fixtures" && btn.dataset.value !== "all");
-  }});
-  setActiveButtons("year", state.year);
-  setActiveButtons("kind", state.kind);
-  setActiveButtons("scope", state.scope);
-}}
-
-function showSection() {{
-  normalizeSelection();
-  document.querySelectorAll(".ranking-section").forEach(sec => {{
-    sec.classList.toggle("active", sec.id === currentSectionId());
-  }});
-  applySearch();
-}}
-
-function applySearch() {{
-  const q = state.search.trim().toLowerCase();
-  const active = document.getElementById(currentSectionId());
-  if (!active) return;
-
-  if (state.kind === "results") {{
-    const cards = active.querySelectorAll(".match-result-card");
-    cards.forEach((card, index) => {{
-      const matchesSearch = !q || card.textContent.toLowerCase().includes(q);
-      const withinLimit = state.resultsExpanded || index === 0 || Boolean(q);
-      card.classList.toggle("result-hidden", !matchesSearch || !withinLimit);
-    }});
-    const toggle = active.querySelector("[data-results-toggle]");
-    if (toggle) {{
-      toggle.hidden = Boolean(q);
-      toggle.textContent = state.resultsExpanded
-        ? "直近1試合だけ表示"
-        : `過去の試合を見る（${{Math.max(cards.length - 1, 0)}}試合）`;
-    }}
-    return;
-  }}
-
-  active.querySelectorAll("tbody tr").forEach(tr => {{
-    const text = tr.textContent.toLowerCase();
-    tr.classList.toggle("hidden-row", q && !text.includes(q));
-  }});
-}}
-
-function scopeLabel(scope) {{
-  if (scope === "div1") return "1部";
-  if (scope === "div2") return "2部";
-  return "総合";
-}}
-
-function playerDatasetKey(year, scope) {{
-  if (scope === "div1") return `${{year}}_player_div1`;
-  if (scope === "div2") return `${{year}}_player_div2`;
-  return `${{year}}_player_all`;
-}}
-
-function openTeamDrawer(team) {{
-  const key = playerDatasetKey(state.year, state.scope);
-  const rows = DATA[key] || [];
-  const filtered = rows.filter(r => (r.team || "").trim() === team);
-
-  const drawer = document.getElementById("teamDrawer");
-  const title = document.getElementById("drawerTitle");
-  const sub = document.getElementById("drawerSub");
-  const body = document.getElementById("drawerBody");
-
-  title.textContent = team;
-  sub.textContent = `${{state.year}} / ${{scopeLabel(state.scope)}} / チーム内個人ランキング`;
-
-  if (!filtered.length) {{
-    body.innerHTML = "<p>該当選手がありません。</p>";
-  }} else {{
-    const trs = filtered.map(r => `
-      <tr>
-        <td class="rank">${{escapeHtml(r.rank || "")}}</td>
-        <td class="player">${{escapeHtml(r.player || "")}}</td>
-        <td class="num">${{escapeHtml(r.goals || "")}}</td>
-        <td class="num">${{escapeHtml(r.match_count || "")}}</td>
-      </tr>
-    `).join("");
-
-    body.innerHTML = `
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>順位</th>
-              <th>選手</th>
-              <th>得点</th>
-              <th>試合数</th>
-            </tr>
-          </thead>
-          <tbody>${{trs}}</tbody>
-        </table>
-      </div>
-    `;
-  }}
-
-  drawer.classList.add("active");
-}}
-
-function escapeHtml(s) {{
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}}
-
-document.querySelectorAll("[data-control] button").forEach(btn => {{
-  btn.addEventListener("click", () => {{
-    const group = btn.parentElement.dataset.control;
-    state[group] = btn.dataset.value;
-    state.resultsExpanded = false;
-    showSection();
-  }});
-}});
-
-document.getElementById("searchBox").addEventListener("input", e => {{
-  state.search = e.target.value || "";
-  applySearch();
-}});
-
-document.addEventListener("click", e => {{
-  const resultsToggle = e.target.closest("[data-results-toggle]");
-  if (resultsToggle) {{
-    state.resultsExpanded = !state.resultsExpanded;
-    applySearch();
-    return;
-  }}
-  const target = e.target.closest(".team-name");
-  if (!target) return;
-  const team = target.dataset.team || target.textContent.trim();
-  if (team) openTeamDrawer(team);
-}});
-
-document.getElementById("drawerClose").addEventListener("click", () => {{
-  document.getElementById("teamDrawer").classList.remove("active");
-}});
-
-showSection();
+{script_js}
 </script>
 </body>
 </html>
@@ -1631,19 +701,22 @@ def summarize(ds: Dataset) -> str:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Build a local preview from verified saved CSVs.")
+    parser.add_argument("--data-dir", type=Path, default=DATA)
+    parser.add_argument("--output", type=Path, default=OUT_HTML)
+    args = parser.parse_args()
     try:
-        datasets = load_datasets()
-
-        backup_existing(OUT_HTML)
-        OUT_HTML.write_text(build_html(datasets), encoding="utf-8")
-
+        if args.output.resolve() == (ROOT / "index.html").resolve():
+            raise HoldError("Build a preview first; public index.html requires a reviewed promotion.")
+        datasets = load_datasets(args.data_dir)
+        page = build_html(datasets)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(args.output, page)
         for key in sorted(datasets):
             print(summarize(datasets[key]))
-
-        print(f"written={OUT_HTML}")
+        print(f"written={args.output}")
         return 0
-
-    except HoldError as e:
+    except (HoldError, OSError, ValueError, KeyError, csv.Error) as e:
         print(f"HOLD: {e}", file=sys.stderr)
         return 2
 

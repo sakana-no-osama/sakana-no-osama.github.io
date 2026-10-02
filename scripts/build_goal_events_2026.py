@@ -7,6 +7,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from workflow_io import DATA, atomic_text_writer
 from typing import List, Sequence, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -374,20 +375,7 @@ def parse_goal_events_for_match(match: MatchRow) -> List[GoalEvent]:
         html_text = fetch_text(match.source_url)
         compact = html_to_compact(html_text)
     except (HTTPError, URLError, TimeoutError) as e:
-        return [
-            GoalEvent(
-                match_id=match.match_id,
-                division=match.division,
-                match_date=match.match_date,
-                section=match.section,
-                team="",
-                player="",
-                goals=0,
-                goal_minutes="",
-                source_url=match.source_url,
-                note=f"fetch_failed:{e}",
-            )
-        ]
+        raise HoldError(f"fetch failed: {match.match_id}: {e}") from e
 
     block, block_note = extract_scorers_block(compact)
     if block_note:
@@ -486,14 +474,14 @@ def parse_goal_events_for_match(match: MatchRow) -> List[GoalEvent]:
 def backup_existing(path: Path) -> None:
     if path.exists():
         backup = path.with_name(f"{path.name}.bak_{now_stamp()}")
-        path.replace(backup)
+        backup.write_bytes(path.read_bytes())
         print(f"backup={backup}")
 
 
 def write_goal_events(rows: Sequence[GoalEvent], path: Path) -> None:
     backup_existing(path)
 
-    with path.open("w", encoding="utf-8-sig", newline="") as f:
+    with atomic_text_writer(path, encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
             "match_id",
@@ -543,8 +531,8 @@ def summarize(events: Sequence[GoalEvent], matches: Sequence[MatchRow]) -> str:
 
 
 def main(argv: Sequence[str]) -> int:
-    in_csv = Path(argv[1]) if len(argv) > 1 else Path(IN_CSV)
-    out_csv = Path(argv[2]) if len(argv) > 2 else Path(OUT_CSV)
+    in_csv = Path(argv[1]) if len(argv) > 1 else DATA / IN_CSV
+    out_csv = Path(argv[2]) if len(argv) > 2 else in_csv.resolve().parent / OUT_CSV
 
     try:
         matches = read_matches(in_csv)
@@ -552,6 +540,14 @@ def main(argv: Sequence[str]) -> int:
 
         for match in matches:
             events = parse_goal_events_for_match(match)
+            expected = match.home_score + match.away_score
+            actual = sum(event.goals for event in events)
+            if actual != expected or any(event.note.startswith("score_mismatch") for event in events):
+                raise HoldError(f"{match.match_id}: score/event mismatch; existing CSV preserved")
+            if expected and any(not event.team or not event.player for event in events):
+                raise HoldError(f"{match.match_id}: incomplete scorer data")
+            if expected == 0 and any(event.note not in {"", "scorers_block_not_found"} for event in events):
+                raise HoldError(f"{match.match_id}: unexpected diagnostic")
             all_events.extend(events)
 
         write_goal_events(all_events, out_csv)

@@ -45,4 +45,6 @@ tools/ranking_update_2026.shは旧Termux用として残し、変更せず、PC�
 
 ## Codexへの更新依頼
 
+保存済みデータの検証・プレビュー生成は [IMPROVEMENT_GUIDE.md](IMPROVEMENT_GUIDE.md) を参照する。Windowsでは `tools/build_preview.ps1` で実行できる。最新試合の取得と公開は別工程。
+
 通常のランキング更新は、Codexへ基本的に「更新して」と依頼する。Codexは作業開始前に docs/CODEX_UPDATE_RULES.md を読み、同ファイルから指定される関連ルールと本手順書を確認してから更新を開始する。

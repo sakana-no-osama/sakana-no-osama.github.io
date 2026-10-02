@@ -6,6 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from workflow_io import DATA, atomic_text_writer
 from typing import Dict, List, Sequence, Set, Tuple
 
 IN_CSV = "goal_events_2026.csv"
@@ -36,7 +37,7 @@ def now_stamp() -> str:
 def backup_existing(path: Path) -> None:
     if path.exists():
         backup = path.with_name(f"{path.name}.bak_{now_stamp()}")
-        path.replace(backup)
+        backup.write_bytes(path.read_bytes())
         print(f"backup={backup}")
 
 
@@ -85,8 +86,8 @@ def read_goal_events(path: Path) -> List[dict]:
 
             if not match_id:
                 raise HoldError(f"blank match_id at csv line {i}")
-            if not division:
-                raise HoldError(f"blank division at match_id={match_id}")
+            if division not in {"1部", "2部"}:
+                raise HoldError(f"invalid division at match_id={match_id}")
 
             goals = safe_int(goals_raw, f"goals at match_id={match_id}")
 
@@ -207,7 +208,7 @@ def aggregate(rows: Sequence[dict], division_filter: str | None) -> List[Ranking
 def write_ranking(rows: Sequence[RankingRow], path: Path) -> None:
     backup_existing(path)
 
-    with path.open("w", encoding="utf-8-sig", newline="") as f:
+    with atomic_text_writer(path, encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
             "rank",
@@ -240,7 +241,9 @@ def summarize(name: str, rows: Sequence[RankingRow]) -> str:
 
 
 def main(argv: Sequence[str]) -> int:
-    in_csv = Path(argv[1]) if len(argv) > 1 else Path(IN_CSV)
+    in_csv = Path(argv[1]) if len(argv) > 1 else DATA / IN_CSV
+
+    output_dir = Path(argv[2]) if len(argv) > 2 else in_csv.resolve().parent
 
     try:
         events = read_goal_events(in_csv)
@@ -249,9 +252,9 @@ def main(argv: Sequence[str]) -> int:
         div1_rows = aggregate(events, "1部")
         div2_rows = aggregate(events, "2部")
 
-        write_ranking(all_rows, Path(OUT_ALL))
-        write_ranking(div1_rows, Path(OUT_DIV1))
-        write_ranking(div2_rows, Path(OUT_DIV2))
+        write_ranking(all_rows, output_dir / OUT_ALL)
+        write_ranking(div1_rows, output_dir / OUT_DIV1)
+        write_ranking(div2_rows, output_dir / OUT_DIV2)
 
         print(summarize("ALL", all_rows))
         print(summarize("DIV1", div1_rows))

@@ -7,6 +7,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from workflow_io import DATA, atomic_text_writer
 from typing import List, Sequence, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -475,28 +476,7 @@ def build_rows(sources: Sequence[SourceRow]) -> List[MatchRow]:
                 )
             )
         except (HoldError, HTTPError, URLError, TimeoutError) as e:
-            rows.append(
-                MatchRow(
-                    year=src.year,
-                    division=src.division,
-                    match_id=match_id,
-                    url_key=url_key,
-                    source_url=src.source_url,
-                    match_date="",
-                    kickoff="",
-                    section="",
-                    home_team="",
-                    away_team="",
-                    home_score="",
-                    away_score="",
-                    venue="",
-                    status="review",
-                    fetched_at=now_iso(),
-                    source_type=src.source_type,
-                    discovered_from=src.discovered_from,
-                    note=str(e),
-                )
-            )
+            raise HoldError(f"fetch/parse failed: {src.source_url}: {e}") from e
 
     return dedupe_rows(rows)
 
@@ -518,7 +498,7 @@ def dedupe_rows(rows: Sequence[MatchRow]) -> List[MatchRow]:
 
 
 def write_csv(rows: Sequence[MatchRow], path: Path) -> None:
-    with path.open("w", encoding="utf-8-sig", newline="") as f:
+    with atomic_text_writer(path, encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
             "year",
@@ -578,12 +558,21 @@ def summarize(rows: Sequence[MatchRow]) -> str:
 
 
 def main(argv: Sequence[str]) -> int:
-    in_csv = Path(argv[1]) if len(argv) > 1 else Path(IN_CSV)
-    out_csv = Path(argv[2]) if len(argv) > 2 else Path(OUT_CSV)
+    in_csv = Path(argv[1]) if len(argv) > 1 else DATA / IN_CSV
+    out_csv = Path(argv[2]) if len(argv) > 2 else in_csv.resolve().parent / OUT_CSV
 
     try:
         sources = read_sources(in_csv)
         rows = build_rows(sources)
+        review = [r.match_id for r in rows if r.status == "review"]
+        if review:
+            raise HoldError(f"unresolved review matches; existing CSV preserved: {review}")
+        if out_csv.exists():
+            with out_csv.open(encoding="utf-8-sig", newline="") as handle:
+                old_played = {r["match_id"] for r in csv.DictReader(handle) if r["status"] == "played"}
+            new_played = {r.match_id for r in rows if r.status == "played"}
+            if old_played - new_played:
+                raise HoldError(f"played matches would disappear: {sorted(old_played - new_played)}")
         write_csv(rows, out_csv)
         print(summarize(rows))
         return 0
