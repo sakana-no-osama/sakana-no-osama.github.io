@@ -20,7 +20,7 @@ import build_team_ranking_2026 as team_ranking
 import build_league_standings_2026 as standings
 import build_next_fixtures_2026 as fixtures
 from official_division import parse_matches
-from ranking_checks import read_csv, check_matches, check_rankings
+from ranking_checks import read_csv, check_matches, check_rankings, read_pending_scorers, PENDING_FILE, PENDING_FIELDS
 from workflow_io import atomic_text_writer
 
 
@@ -31,7 +31,7 @@ def write(path: Path, rows: list[dict], fields: list[str]) -> None:
         writer.writerows(rows)
 
 
-def prepare(raw: Path, output: Path, as_of: date) -> dict:
+def prepare(raw: Path, output: Path, as_of: date, pending_match_ids: set[str] | None = None) -> dict:
     if output.resolve() == (ROOT / "data").resolve():
         raise ValueError("Candidate output must not be the official data directory")
     if output.exists() and any(output.iterdir()):
@@ -40,6 +40,10 @@ def prepare(raw: Path, output: Path, as_of: date) -> dict:
     old_matches = read_csv(ROOT / "data/matches_2026.csv")
     old_by_id = {row["match_id"]: row for row in old_matches}
     old_events = read_csv(ROOT / "data/goal_events_2026.csv")
+    old_pending = read_pending_scorers(ROOT / "data")
+    allowed_pending = set(old_pending) | (pending_match_ids or set())
+    pending = []
+    resolved = []
     old_event_groups = defaultdict(list)
     for row in old_events:
         old_event_groups[row["match_id"]].append(row)
@@ -85,11 +89,22 @@ def prepare(raw: Path, output: Path, as_of: date) -> dict:
                     row["home_team"], row["away_team"], int(row["home_score"]), int(row["away_score"]), row["source_url"])
                 events = [asdict(event) for event in goal_events.parse_goal_events_for_match(match, body)]
                 previous_events = old_event_groups.get(row["match_id"])
-                if previous_events:
+                if previous_events and row["match_id"] not in old_pending:
                     signature = lambda values: [(r["team"], r["player"], str(r["goals"]), r["goal_minutes"]) for r in values]
                     if signature(events) != signature(previous_events):
                         raise ValueError(f'{row["match_id"]}: historical scorer facts changed; review source')
                     events = previous_events
+                unpublished = (len(events) == 1 and str(events[0]["goals"]) == "0"
+                               and not events[0]["team"] and not events[0]["player"]
+                               and events[0]["note"] == "scorers_block_not_found")
+                if unpublished and match.home_score + match.away_score > 0:
+                    if row["match_id"] not in allowed_pending:
+                        raise ValueError(f'{row["match_id"]}: unpublished scorers require explicit partial-update authorization')
+                    pending.append(dict(match_id=row["match_id"], home_score=row["home_score"], away_score=row["away_score"],
+                        source_url=row["source_url"], checked_on=as_of.isoformat(),
+                        source_sha256=evidence[row["match_id"] + ".html"], reason="official_scorers_not_published"))
+                elif row["match_id"] in old_pending:
+                    resolved.append(row["match_id"])
                 all_events.extend(events)
             all_matches.append(row)
         next_games.extend(asdict(item) for item in fixtures.parse_page(page, division, source_page, as_of, masters[division]))
@@ -104,6 +119,8 @@ def prepare(raw: Path, output: Path, as_of: date) -> dict:
     write(output / "matches_2026.csv", all_matches, list(old_matches[0]))
     write(output / "matches_2026_played.csv", [r for r in all_matches if r["status"] == "played"], list(old_matches[0]))
     write(output / "goal_events_2026.csv", all_events, list(old_events[0]))
+    if pending or old_pending or (ROOT / "data" / PENDING_FILE).exists():
+        write(output / PENDING_FILE, pending, PENDING_FIELDS)
     write(output / "match_sources_2026.csv", source_rows, list(source_rows[0]))
     write(output / "next_fixtures_2026.csv", next_games, fixtures.FIELDS)
     parsed_events = player_ranking.read_goal_events(output / "goal_events_2026.csv")
@@ -114,7 +131,7 @@ def prepare(raw: Path, output: Path, as_of: date) -> dict:
     for division, suffix in (("1部", "div1"), ("2部", "div2")):
         ranked, _ = standings.build_division(all_matches, division, masters, aliases)
         write(output / f"league_standings_2026_{suffix}.csv", [asdict(r) for r in ranked], standings.FIELDS)
-    report = dict(as_of=as_of.isoformat(), added_matches=added, matches=check_matches(output),
+    report = dict(as_of=as_of.isoformat(), added_matches=added, resolved_pending=resolved, matches=check_matches(output),
                   rankings=check_rankings(output), source_sha256=evidence)
     (output.parent / "update_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     return report
@@ -125,9 +142,11 @@ def main():
     parser.add_argument("--raw-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--as-of", type=date.fromisoformat, required=True)
+    parser.add_argument("--pending-scorer-match", action="append", default=[],
+                        help="Explicitly authorized match ID whose official scorer block is unpublished; repeat per match")
     args = parser.parse_args()
     try:
-        result = prepare(args.raw_dir, args.output_dir, args.as_of)
+        result = prepare(args.raw_dir, args.output_dir, args.as_of, set(args.pending_scorer_match))
         print(json.dumps({k: v for k, v in result.items() if k != "source_sha256"}, ensure_ascii=False))
         print("Candidate data ready; full standings/fixtures and HTML verification still required")
         return 0

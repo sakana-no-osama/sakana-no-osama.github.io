@@ -4,9 +4,34 @@ from __future__ import annotations
 import csv
 import re
 from collections import Counter, defaultdict
+from datetime import date
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "data"
+PENDING_FILE = "pending_scorers_2026.csv"
+PENDING_FIELDS = ["match_id", "home_score", "away_score", "source_url", "checked_on", "source_sha256", "reason"]
+
+
+def read_pending_scorers(data: Path = DATA) -> dict[str, dict]:
+    path = data / PENDING_FILE
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != PENDING_FIELDS:
+            raise ValueError("pending scorers: invalid columns")
+        pending = {}
+        for row in reader:
+            mid = row.get("match_id")
+            if None in row or None in row.values() or not mid or mid in pending:
+                raise ValueError("pending scorers: malformed or duplicate row")
+            if row["reason"] != "official_scorers_not_published":
+                raise ValueError(f"{mid}: unsupported pending reason")
+            date.fromisoformat(row["checked_on"])
+            if not re.fullmatch(r"[0-9a-f]{64}", row["source_sha256"]):
+                raise ValueError(f"{mid}: missing source evidence hash")
+            pending[mid] = row
+    return pending
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -39,8 +64,18 @@ def check_matches(data: Path = DATA) -> dict:
         if not mid or mid in by_id or match["division"] not in {"1部", "2部"}:
             raise ValueError(f"invalid/duplicate match: {mid}")
         by_id[mid] = match
+    pending = read_pending_scorers(data)
+    for mid, item in pending.items():
+        if mid not in by_id:
+            raise ValueError(f"{mid}: pending entry is not a played match")
+        match = by_id[mid]
+        if any(item[k] != match[k] for k in ("home_score", "away_score")) or item["source_url"].rstrip("/") != match["source_url"].rstrip("/"):
+            raise ValueError(f"{mid}: pending evidence differs from match")
+        if integer(item["home_score"], mid) + integer(item["away_score"], mid) == 0:
+            raise ValueError(f"{mid}: zero score cannot be pending")
     events = read_csv(data / "goal_events_2026.csv")
     sums = Counter()
+    diagnostics = Counter()
     seen = set()
     for line, row in enumerate(events, 2):
         mid = row["match_id"]
@@ -53,11 +88,14 @@ def check_matches(data: Path = DATA) -> dict:
         if row.get("note", "").startswith("fetch_failed"):
             raise ValueError(f"{mid}: unresolved fetch failure")
         if goals == 0:
-            if (integer(match["home_score"], mid) + integer(match["away_score"], mid)) != 0:
+            if mid not in pending and (integer(match["home_score"], mid) + integer(match["away_score"], mid)) != 0:
                 raise ValueError(f"{mid}: diagnostic row for a nonzero match")
-            if row["team"] or row["player"] or row.get("note") != "scorers_block_not_found":
+            if row["team"] or row["player"] or row.get("goal_minutes") or row.get("note") != "scorers_block_not_found":
                 raise ValueError(f"{mid}: unsupported zero-goal diagnostic")
+            diagnostics[mid] += 1
             continue
+        if mid in pending:
+            raise ValueError(f"{mid}: pending entry must be resolved before adding scorer events")
         if not row["team"].strip() or not row["player"].strip():
             raise ValueError(f"{mid}: positive goal with blank team/player")
         identity = tuple(sorted(row.items()))
@@ -71,12 +109,19 @@ def check_matches(data: Path = DATA) -> dict:
             raise ValueError(f"{mid}: scorer team not in match: {team}")
         sums[mid, team] += goals
     for mid, match in by_id.items():
+        if mid in pending:
+            if diagnostics[mid] != 1:
+                raise ValueError(f"{mid}: pending match needs exactly one unpublished diagnostic")
+            continue
         for side in ("home", "away"):
             team = aliases.get((match["division"], match[f"{side}_team"]), match[f"{side}_team"])
             expected = integer(match[f"{side}_score"], f"{mid}.{side}_score")
             if sums[mid, team] != expected:
                 raise ValueError(f"{mid}: {side} score/scorers expected={expected} actual={sums[mid, team]}")
-    return {"matches": len(matches), "goals": sum(sums.values()),
+    score_goals = sum(integer(r[side + "_score"], r["match_id"]) for r in matches for side in ("home", "away"))
+    return {"matches": len(matches), "goals": sum(sums.values()), "score_goals": score_goals,
+            "pending_matches": len(pending), "pending_goals": score_goals - sum(sums.values()),
+            "scorer_completeness": "HOLD" if pending else "PASS",
             "latest": max(row["match_date"] for row in matches)}
 
 

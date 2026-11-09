@@ -23,6 +23,7 @@ function normalizeSelection() {
 }
 function showSection() {
   normalizeSelection();
+  document.querySelectorAll('[data-coverage-year]').forEach(notice => notice.hidden = notice.dataset.coverageYear !== state.year);
   document.querySelectorAll(".ranking-section").forEach(section => section.classList.toggle("active", section.id === currentSectionId()));
   applySearch();
 }
@@ -60,7 +61,7 @@ function openTeamDrawer(team) {
   const rows = (DATA[`${state.year}_player_${state.scope}`] || []).filter(row => row.team.trim() === team);
   const scope = {all: "総合", div1: "1部", div2: "2部"}[state.scope];
   $("drawerTitle").textContent = team;
-  $("drawerSub").textContent = `${state.year} / ${scope} / チーム内個人ランキング`;
+  $("drawerSub").textContent = `${state.year} / ${scope} / チーム内個人ランキング（確認済み得点のみ）`;
   let previousGoals = null;
   let teamRank = 0;
   const body = rows.map((row, index) => {

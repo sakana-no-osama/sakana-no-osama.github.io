@@ -21,6 +21,22 @@
   box-sizing: border-box;
 }
 
+.coverage-notice {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border: 1px solid #e8c987;
+  border-radius: 16px;
+  background: #fff9e9;
+  color: #624b17;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.coverage-notice p { margin: 6px 0; }
+.coverage-notice summary { cursor: pointer; font-weight: 700; }
+.coverage-notice ul { margin: 8px 0 0; padding-left: 20px; }
+.coverage-notice a { color: #624b17; }
+.pending-scorers { color: #795711; font-weight: 600; }
+
 html,
 body {
   overflow-x: hidden;

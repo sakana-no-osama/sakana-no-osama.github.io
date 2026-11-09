@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from workflow_io import ROOT, DATA, atomic_write_text
-from ranking_checks import check_matches, check_rankings
+from ranking_checks import check_matches, check_rankings, read_pending_scorers
 from typing import Dict, List, Sequence
 
 
@@ -169,6 +169,7 @@ def load_team_aliases(data_dir: Path = DATA) -> Dict[tuple[str, str], str]:
 
 def load_match_result_datasets(data_dir: Path = DATA) -> Dict[str, Dataset]:
     check_matches(data_dir)
+    pending = read_pending_scorers(data_dir)
     matches = read_csv_required(data_dir / MATCH_RESULTS_CSV)
     events = read_csv_required(data_dir / GOAL_EVENTS_CSV)
     aliases = load_team_aliases(data_dir)
@@ -229,7 +230,7 @@ def load_match_result_datasets(data_dir: Path = DATA) -> Dict[str, Dataset]:
             raise HoldError(f"{match_id}: scorer team not in match: {sorted(unknown_teams)}")
         expected = int(home_score_text) + int(away_score_text)
         actual = sum(int(event["goals"]) for event in match_events)
-        if actual != expected:
+        if actual != expected and match_id not in pending:
             raise HoldError(f"{match_id}: score/scorer mismatch expected={expected} actual={actual}")
 
         result_rows.append({
@@ -243,6 +244,7 @@ def load_match_result_datasets(data_dir: Path = DATA) -> Dict[str, Dataset]:
             "away_team": away,
             "home_score": home_score_text,
             "away_score": away_score_text,
+            "scorers_pending": match_id in pending,
             "home_scorers": [event for event in match_events if event["team"] == home],
             "away_scorers": [event for event in match_events if event["team"] == away],
         })
@@ -407,8 +409,10 @@ def build_fixture_cards(rows: Sequence[dict]) -> str:
     return "\n".join(cards)
 
 
-def build_scorer_group(team: str, scorers: Sequence[dict]) -> str:
-    if not scorers:
+def build_scorer_group(team: str, scorers: Sequence[dict], pending: bool = False) -> str:
+    if pending:
+        body = '<p class="pending-scorers">得点者は公式記録の掲載待ちです</p>'
+    elif not scorers:
         body = '<p class="no-scorers">得点者なし</p>'
     else:
         items = []
@@ -439,8 +443,8 @@ def build_result_cards(rows: Sequence[dict]) -> str:
             f'<span class="match-team away">{esc(row.get("away_team"))}</span>'
             '</div>'
             '<div class="scorer-groups">'
-            f'{build_scorer_group(row["home_team"], row["home_scorers"])}'
-            f'{build_scorer_group(row["away_team"], row["away_scorers"])}'
+            f'{build_scorer_group(row["home_team"], row["home_scorers"], row.get("scorers_pending", False) and int(row["home_score"]) > 0)}'
+            f'{build_scorer_group(row["away_team"], row["away_scorers"], row.get("scorers_pending", False) and int(row["away_score"]) > 0)}'
             '</div>'
             '</article>'
         )
@@ -578,6 +582,29 @@ def build_section(ds: Dataset) -> str:
 """
 
 
+def build_coverage_notice(datasets: Dict[str, Dataset]) -> str:
+    results = datasets["2026_results_all"].rows
+    pending = [row for row in results if row.get("scorers_pending")]
+    if not pending:
+        return ""
+    total = sum(int(row["home_score"]) + int(row["away_score"]) for row in results)
+    missing = sum(int(row["home_score"]) + int(row["away_score"]) for row in pending)
+    known = sum(int(row["goals"]) for row in datasets["2026_player_all"].rows)
+    if known + missing != total:
+        raise HoldError("Coverage notice totals differ from match results")
+    links = "".join(
+        f'<li><a href="{esc(row["source_url"])}" target="_blank" rel="noopener noreferrer">'
+        f'{esc(row["match_date"])} {esc(row["division"])} '
+        f'{esc(row["home_team"])} {esc(row["home_score"])}–{esc(row["away_score"])} {esc(row["away_team"])}'
+        '</a></li>' for row in pending)
+    return (f'<aside class="coverage-notice" data-coverage-year="2026" aria-label="得点記録の反映状況">'
+            '<strong>2026年：得点者記録は一部掲載待ちです</strong>'
+            f'<p>試合結果・順位表は{len(results)}試合・{total}得点を反映。'
+            f'個人・チーム得点ランキングは、得点者を確認できた{known}得点のみ集計しています。'
+            f'未掲載の{len(pending)}試合・{missing}得点は、公式記録を確認後に追加します。</p>'
+            f'<details><summary>未反映の{len(pending)}試合と公式情報</summary><ul>{links}</ul></details></aside>')
+
+
 def build_html(datasets: Dict[str, Dataset]) -> str:
     sections = []
 
@@ -623,6 +650,8 @@ def build_html(datasets: Dict[str, Dataset]) -> str:
       <small>ページ生成: {esc(now_local())}</small>
     </div>
   </header>
+
+  {build_coverage_notice(datasets)}
 
   <div class="controls">
     <div class="control-card">

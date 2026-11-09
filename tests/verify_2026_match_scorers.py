@@ -13,7 +13,10 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path, default=DATA)
     args = parser.parse_args()
     try:
-        print(check_matches(args.data_dir))
+        result = check_matches(args.data_dir)
+        print(result)
+        print(f"SCORER_COMPLETENESS={result['scorer_completeness']}")
+        print("CHECK_SCOPE=score/scorer integrity including explicitly registered unpublished records")
         print("VERDICT=PASS")
         return 0
     except (OSError, ValueError, KeyError, csv.Error) as exc:

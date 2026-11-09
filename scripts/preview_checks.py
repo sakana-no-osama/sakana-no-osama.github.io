@@ -2,7 +2,7 @@
 from html.parser import HTMLParser
 import json
 
-from build_all_years_ranking_html import dataset_json, build_result_cards, build_fixture_cards
+from build_all_years_ranking_html import dataset_json, build_result_cards, build_fixture_cards, build_coverage_notice
 
 
 class PageReader(HTMLParser):
@@ -58,6 +58,9 @@ class PageReader(HTMLParser):
 
 
 def check_page(page: str, datasets: dict) -> None:
+    notice = build_coverage_notice(datasets)
+    if notice and notice not in page:
+        raise ValueError("HTML coverage notice missing or inconsistent")
     parsed = PageReader()
     parsed.feed(page)
     fields = {
